@@ -1,0 +1,8 @@
+{
+    "challenge_id": "meta-comprehensive-rag-benchmark-kdd-cup-2024",
+    "authors": [
+      "aicrowd-bot"
+    ],
+    "gpu": true,
+    "description": "(optional) description about your awesome agent"
+}
