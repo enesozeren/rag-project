@@ -87,6 +87,10 @@ You can add your SSH Keys to your GitLab account by going to your profile settin
 
 7. Make a submission as described in [How to make a submission](#-how-to-make-a-submission) section.
 
+# ✍️ How to write your own model?
+
+Please follow the instructions in [models/README.md](models/README.md) for instructions and examples on how to write your own models for this competition.
+
 
 ## 📮 How to make a submission?
 
