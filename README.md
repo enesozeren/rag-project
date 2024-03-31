@@ -47,7 +47,7 @@ Please refer to [local_evaluation.py](local_evaluation.py) for more details on h
 2. **Fork** this starter kit repository. You can use [this link](https://gitlab.aicrowd.com/aicrowd/challenges/meta-comprehensive-rag-benchmark-kdd-cup-2024/meta-comphrehensive-rag-benchmark-starter-kit/-/forks/new) to create a fork.
 3. **Clone** your forked repo and start developing your model.
 4. **Develop** your model(s) following the template in [how to write your own model](#how-to-write-your-own-model) section.
-5. [**Submit**](#-how-to-make-a-submission) your trained models to [AIcrowd Gitlab](https://gitlab.aicrowd.com) for evaluation [(full instructions below)](#-how-to-make-a-submission). The automated evaluation setup will evaluate the submissions on the private datasets and report the metrics on the leaderboard of the competition.
+5. [**Submit**](#-how-to-make-a-submission) your trained models to [AIcrowd Gitlab](https://gitlab.aicrowd.com) for evaluation [(full instructions below)](#-how-to-make-a-submission). The automated evaluation will evaluate the submissions on the public test set and report the metrics on the leaderboard of the competition.
 
 # ✍️ How to write your own model?
 
