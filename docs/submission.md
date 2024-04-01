@@ -33,13 +33,13 @@ Your project should follow the structure outlined in the starter kit. Here’s a
 ```
 .
 ├── README.md                       # Project documentation and setup instructions
+├── .dockerignore                   # dockerignore file to exclude large models from image building phase
 ├── aicrowd.json                    # Submission meta information - like your username, track name
 ├── data
 │   └── development.json            # Development dataset local testing
 ├── docs
 │   └── runtime.md                  # Documentation on the runtime environment setup, dependency confifgs
 ├── local_evaluation.py             # Use this to check your model evaluation flow locally
-├── metrics.py                      # Scripts to calculate evaluation metrics for your model's performance
 ├── models
 │   ├── README.md                   # Documentation specific to the implementation of model interfaces
 │   ├── base_model.py               # Base model class 
