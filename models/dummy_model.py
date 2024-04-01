@@ -1,6 +1,8 @@
 import os
 from typing import List
 
+from models.utils import trim_predictions_to_max_token_length
+
 # Load the environment variable that specifies the URL of the MockAPI. This URL is essential
 # for accessing the correct API endpoint in Task 2 and Task 3. The value of this environment variable
 # may vary across different evaluation settings, emphasizing the importance of dynamically obtaining
@@ -44,4 +46,7 @@ class DummyModel:
         # Default response when unsure about the answer
         answer = "i don't know"
         
-        return answer
+        # Trim prediction to a max of 75 tokens
+        trimmed_answer = trim_predictions_to_max_token_length(answer)
+        
+        return trimmed_answer

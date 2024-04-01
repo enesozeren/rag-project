@@ -6,6 +6,9 @@ from loguru import logger
 from openai import APIConnectionError, OpenAI, RateLimitError
 from prompts.templates import IN_CONTEXT_EXAMPLES, INSTRUCTIONS
 from tqdm.auto import tqdm
+from transformers import LlamaTokenizerFast
+
+tokenizer = LlamaTokenizerFast.from_pretrained("tokenizer")
 
 
 def load_json_file(file_path):
@@ -41,10 +44,12 @@ def attempt_api_call(client, model_name, messages, max_retries=10):
     return None
 
 
-def log_response(messages, response):
+def log_response(messages, response, output_directory="api_responses"):
     """Save the response from the API to a file."""
+    os.makedirs(output_directory, exist_ok=True)
     file_name = datetime.now().strftime("%d-%m-%Y-%H-%M-%S.json")
-    with open(f"api_responses/{file_name}", "w") as f:
+    file_path = os.path.join(output_directory, file_name)
+    with open(file_path, "w") as f:
         json.dump({"messages": messages, "response": response}, f)
 
 
@@ -71,6 +76,13 @@ def parse_response(resp: str):
     except:
         return -1
 
+def trim_predictions_to_max_token_length(prediction):
+    """Trims prediction output to 75 tokens"""
+    max_token_length = 75
+    tokenized_prediction = tokenizer.encode(prediction)
+    trimmed_tokenized_prediction = tokenized_prediction[1: max_token_length+1]
+    trimmed_prediction = tokenizer.decode(trimmed_tokenized_prediction)
+    return trimmed_prediction
 
 def generate_predictions(dataset_path, participant_model):
     qa = load_json_file(os.path.join(dataset_path, "qa.json"))
@@ -82,6 +94,8 @@ def generate_predictions(dataset_path, participant_model):
         prediction = participant_model.generate_answer(
             query, query_web_search_results
         )
+        # trim prediction to 75 tokens
+        prediction = trim_predictions_to_max_token_length(prediction)
         predictions.append(
             {
                 "query": query,
