@@ -1,3 +1,4 @@
 torch
 transformers
 loguru
+openai==1.13.3
