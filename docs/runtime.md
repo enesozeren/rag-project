@@ -25,4 +25,4 @@ These files are used to construct your **AIcrowd submission docker containers** 
 
 ----
 
-To test your image builds locally, you can use [repo2docker](https://github.com/jupyterhub/repo2docker)
+To test your image builds locally, you can use the included [docker_run.sh][../docker_run.sh] script.

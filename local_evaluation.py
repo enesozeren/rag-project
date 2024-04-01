@@ -3,7 +3,6 @@ import os
 from datetime import datetime
 
 from loguru import logger
-from models.user_config import UserModel
 from openai import APIConnectionError, OpenAI, RateLimitError
 from prompts.templates import IN_CONTEXT_EXAMPLES, INSTRUCTIONS
 from tqdm.auto import tqdm
@@ -146,6 +145,8 @@ def evaluate_predictions(predictions, evaluation_model_name, openai_client):
 
 
 if __name__ == "__main__":
+    from models.user_config import UserModel
+
     DATASET_PATH = "example_data/"
     EVALUATION_MODEL_NAME = os.getenv(
         "EVALUATION_MODEL_NAME", "gpt-4-0125-preview"
