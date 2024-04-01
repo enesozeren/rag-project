@@ -15,10 +15,9 @@ To ensure your model is recognized and utilized correctly, please specify your m
 Your model will receive two pieces of information for every task:
 - `query`: String representing the input query
 - `search_results`: List of strings, each comes from scraped HTML text of the search query.
-- `character_limit`: The maximum character limit for the answer (can vary per query)
 
 ### Outputs
 The output from your model's `generate_answer` function should always be a string.
 
 ## Internet Access
-Your model will not have access to the internet during evaluation. Your model will have access to LLaMa 2 weights. **[TO BE ADDED]**.
+Your model will not have access to the internet during evaluation. 
