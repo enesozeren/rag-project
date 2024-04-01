@@ -3,6 +3,6 @@
     "authors": [
       "aicrowd-bot"
     ],
-    "gpu": true,
+    "gpu": false,
     "description": "(optional) description about your awesome agent"
 }
