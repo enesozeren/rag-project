@@ -17,5 +17,5 @@ class DummyModel:
             string response - Your answer in plain text, should be limited to the character limit, 
                               Any longer responses will be trimmed to meet the character limit
         """
-        answer = "I'm sorry, I can't help with that."
+        answer = "i don't know"
         return answer
