@@ -19,6 +19,7 @@ fi
 if [ -z "$EVALUATION_MODEL_NAME" ]; then
     echo "Warning: EVALUATION_MODEL_NAME is not set."
     echo "Using the default model as: gpt-4-0125-preview"
+    export EVALUATION_MODEL_NAME="gpt-4-0125-preview"
 fi
 
 
