@@ -21,3 +21,6 @@ Besides, the following restrictions will also be imposed:
 - Each team will be able to make up to **4 submissions per week per track**, and will be allowed an additional quota of upto **4 failed submissions per task per week**.
 
 Based on the hardware and system configuration, we recommend participants to begin with 7B and 13B models. According to our experiments, models like Llama-2 13B can perform inference smoothly on 4 NVIDIA T4 GPUs, while 13B models will result in OOM.
+
+
+
