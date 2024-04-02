@@ -125,7 +125,7 @@ def evaluate_predictions(predictions, evaluation_model_name, openai_client):
                 "content": f"Question: {query}\n Ground truth: {ground_truth}\n Prediction: {prediction}\n",
             },
         ]
-        if prediction == "i don't know":
+        if prediction == "i don't know" or prediction == "i don't know.":
             n_miss += 1
             continue
         if prediction == ground_truth:
