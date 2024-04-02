@@ -62,30 +62,28 @@ Please follow the instructions in [models/README.md](models/README.md) for instr
 You can add your SSH Keys to your GitLab account by going to your profile settings [here](https://gitlab.aicrowd.com/-/profile/keys). If you do not have SSH Keys, you will first need to [generate one](https://docs.gitlab.com/ee/user/ssh.html).
 
 
-
-
 2. **Fork the repository**. You can use [this link](https://gitlab.aicrowd.com/aicrowd/challenges/meta-comprehensive-rag-benchmark-kdd-cup-2024/meta-comphrehensive-rag-benchmark-starter-kit/-/forks/new) to create a fork.
 
-2.  **Clone the repository**
+3.  **Clone the repository**
 
     ```bash
-    git clone git@gitlab.aicrowd.com:aicrowd/challenges/meta-comprehensive-rag-benchmark-kdd-cup-2024/meta-comphrehensive-rag-benchmark-starter-kit.git
+    git clone git@gitlab.aicrowd.com:<YOUR-AICROWD-USERNAME>/meta-comphrehensive-rag-benchmark-starter-kit.git
     cd meta-comphrehensive-rag-benchmark-starter-kit
     ```
 
-3. **Install** competition specific dependencies!
+4. **Install** competition specific dependencies!
     ```bash
     cd meta-comphrehensive-rag-benchmark-starter-kit
     pip install -r requirements.txt
     ```
 
-4. Write your own model as described in [How to write your own model](#how-to-write-your-own-model) section.
+5. Write your own model as described in [How to write your own model](#how-to-write-your-own-model) section.
 
-5. Test your model locally using `python local_evaluation.py`.
+6. Test your model locally using `python local_evaluation.py`.
 
-6. Accept the Challenge Rules on the main [challenge page](https://www.aicrowd.com/challenges/meta-comprehensive-rag-benchmark-kdd-cup-2024) by clicking on the **Participate** button. Also accept the Challenge Rules on the Task specific page (link on the challenge page) that you want to submit to.
+7. Accept the Challenge Rules on the main [challenge page](https://www.aicrowd.com/challenges/meta-comprehensive-rag-benchmark-kdd-cup-2024) by clicking on the **Participate** button. Also accept the Challenge Rules on the Task specific page (link on the challenge page) that you want to submit to.
 
-7. Make a submission as described in [How to make a submission](#-how-to-make-a-submission) section.
+8. Make a submission as described in [How to make a submission](#-how-to-make-a-submission) section.
 
 # ✍️ How to write your own model?
 
@@ -107,6 +105,9 @@ In summary, we provide you `4` x [[NVIDIA T4 GPUs](https://www.nvidia.com/en-us/
 # ❓ Frequently Asked Questions
 ## Which track is this starter kit for ?
 This starter kit can be used to submit to any of the tracks. You can find more information in [docs/submission.md#submitting-to-different-tracks](docs/submission.md#submitting-to-different-tracks).
+
+## Where can I know more about the dataset schema ?
+The dataset schema is described in [docs/dataset.md](docs/dataset.md).
 
 **Best of Luck** :tada: :tada:
 
