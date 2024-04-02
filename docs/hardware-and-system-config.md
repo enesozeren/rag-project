@@ -14,8 +14,10 @@ Please note that NVIDIA T4 uses a somewhat outdated architecture and is thus not
 Besides, the following restrictions will also be imposed: 
 
 - Network connection will be disabled.
-- Each submission will be assigned a certain amount of time to run. Submissions that exceed the time limits will be killed and will not be evaluated. The tentative time limit is set as follows **[TO BE ADDED AND TESTED WITH AICROWD SUBMISSION SYSTEM]**. 
+- Each submission will be assigned a certain amount of time to run. Submissions that exceed the time limits will be killed and will not be evaluated. The tentative time limit is set as follows : 
+- `10s` timeout for each sample prediction.
+- Overall timeout of `2600s` fot 260 samples.
 
-- Each team will be able to make up to **1 submission per day**, with a maximum of **[TO BE ADDED AND TESTED WITH AICROWD SUBMISSION SYSTEM]**. 
+- Each team will be able to make up to **4 submissions per week per track**, and will be allowed an additional quota of upto **4 failed submissions per task per week**.
 
 Based on the hardware and system configuration, we recommend participants to begin with 7B and 13B models. According to our experiments, models like Llama-2 13B can perform inference smoothly on 4 NVIDIA T4 GPUs, while 13B models will result in OOM.
