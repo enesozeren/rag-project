@@ -7,6 +7,7 @@ We apply a limit on the hardware available to each participant to run their solu
     - `40` x vCPU (`20` physical CPU cores)
     - `180GB` RAM
 
+**Note**: When running in `gpu:false` mode, you will have access to `4` x vCPUs (`2` physical cores) and `8GB` RAM. 
 
 Please note that NVIDIA T4 uses a somewhat outdated architecture and is thus not compatible with certain acceleration toolkits (e.g. Flash Attention), so please be careful about compatibility.
 
