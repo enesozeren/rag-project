@@ -1,4 +1,4 @@
-    # CRAG Dataset Documentation
+# CRAG Dataset Documentation
 
 ## Dataset Version Information
 
