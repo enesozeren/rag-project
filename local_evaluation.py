@@ -92,7 +92,7 @@ def generate_predictions(dataset_path, participant_model):
     for query_dict, query_web_search_results in tqdm(zip(qa, web_results), total=len(qa), desc="Generating Predictions"):
         query = query_dict["query"]
         prediction = participant_model.generate_answer(
-            query, query_web_search_results
+            query, query_web_search_results['search_response']
         )
         # trim prediction to 75 tokens
         prediction = trim_predictions_to_max_token_length(prediction)
