@@ -24,6 +24,7 @@ This repository is the CRAG: Comphrensive RAG Benchmark **Submission template an
       - [How to make a submission?](#-how-to-make-a-submission)
       - [What hardware does my code run on?](#-what-hardware-does-my-code-run-on-)
       - [How are my model responses parsed by the evaluators?](#-how-are-my-model-responses-parsed-by-the-evaluators-)
+      - [Baselines](#baselines)
 6. [Frequently Asked Questions](#-frequently-asked-questions)
 6. [Important Links](#-important-links)
 
@@ -101,6 +102,8 @@ This also includes instructions on [specifying your software runtime](docs/submi
 You can find more details about the hardware and system configuration in [docs/hardware-and-system-config.md](docs/hardware-and-system-config.md).
 In summary, we provide you `4` x [[NVIDIA T4 GPUs](https://www.nvidia.com/en-us/data-center/tesla-t4/)].
 
+## 🏁 Baseline
+We include two baselines for demonstration purposes, and you can read more abou them in [docs/baselines.md](docs/baselines.md).
 
 # ❓ Frequently Asked Questions
 ## Which track is this starter kit for ?
