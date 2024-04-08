@@ -1,4 +1,11 @@
-torch
-transformers
+accelerate
+beautifulsoup4
+bitsandbytes
+blingfire
+hf-transfer
+huggingface-hub
 loguru
 openai==1.13.3
+sentence_transformers
+torch
+transformers
