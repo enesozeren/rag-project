@@ -1,3 +1,4 @@
+import bz2
 import json
 import os
 from datetime import datetime
@@ -84,25 +85,28 @@ def trim_predictions_to_max_token_length(prediction):
     trimmed_prediction = tokenizer.decode(trimmed_tokenized_prediction)
     return trimmed_prediction
 
-def generate_predictions(dataset_path, participant_model):
-    qa = load_json_file(os.path.join(dataset_path, "qa.json"))
-    web_results = load_json_file(os.path.join(dataset_path, "web.json"))
-
+def generate_predictions(dataset_path, participant_model):    
     predictions = []
-    for query_dict, query_web_search_results in tqdm(zip(qa, web_results), total=len(qa), desc="Generating Predictions"):
-        query = query_dict["query"]
-        prediction = participant_model.generate_answer(
-            query, query_web_search_results['search_response']
-        )
-        # trim prediction to 75 tokens
-        prediction = trim_predictions_to_max_token_length(prediction)
-        predictions.append(
-            {
-                "query": query,
-                "ground_truth": query_dict["answer"].strip().lower(),
-                "prediction": prediction.strip().lower(),
-            }
-        )
+    with bz2.open(DATASET_PATH, "rt") as bz2_file:
+        for line in tqdm(bz2_file, desc="Generating Predictions"):
+            data = json.loads(line)
+            
+            query = data["query"]
+            web_search_results = data["search_results"]
+            
+            prediction = participant_model.generate_answer(
+                query, web_search_results
+            )
+            
+            # trim prediction to 75 tokens
+            prediction = trim_predictions_to_max_token_length(prediction)
+            predictions.append(
+                {
+                    "query": query,
+                    "ground_truth": str(data["answer"]).strip().lower(),
+                    "prediction": str(prediction).strip().lower(),
+                }
+            )            
 
     return predictions
 
@@ -161,7 +165,7 @@ def evaluate_predictions(predictions, evaluation_model_name, openai_client):
 if __name__ == "__main__":
     from models.user_config import UserModel
 
-    DATASET_PATH = "example_data/"
+    DATASET_PATH = "example_data/dev_data.jsonl.bz2"
     EVALUATION_MODEL_NAME = os.getenv(
         "EVALUATION_MODEL_NAME", "gpt-4-0125-preview"
     )
