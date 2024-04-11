@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import Dict, List
 
 from models.utils import trim_predictions_to_max_token_length
 
@@ -14,6 +14,7 @@ from models.utils import trim_predictions_to_max_token_length
 # **Note**: This environment variable will not be available for Task 1 evaluations.
 CRAG_MOCK_API_URL = os.getenv("CRAG_MOCK_API_URL", "http://localhost:8000")
 
+
 class DummyModel:
     def __init__(self):
         """
@@ -23,15 +24,15 @@ class DummyModel:
         """
         pass
 
-    def generate_answer(self, query: str, search_results: List[str]) -> str:
+    def generate_answer(self, query: str, search_results: List[Dict]) -> str:
         """
         Generate an answer based on a provided query and a list of pre-cached search results.
 
         Parameters:
         - query (str): The user's question or query input.
-        - search_results (List[str]): A list containing the text content from web pages
-          retrieved as search results for the query. Each element in the list is a string
-          representing the HTML text of a web page.
+        - search_results (List[Dict]): A list containing the search result objects,
+        as described here:
+          https://gitlab.aicrowd.com/aicrowd/challenges/meta-comprehensive-rag-benchmark-kdd-cup-2024/meta-comphrehensive-rag-benchmark-starter-kit/-/blob/master/docs/dataset.md#search-results-detail
 
         Returns:
         - (str): A plain text response that answers the query. This response is limited to 75 tokens.
@@ -45,8 +46,8 @@ class DummyModel:
         """
         # Default response when unsure about the answer
         answer = "i don't know"
-        
+
         # Trim prediction to a max of 75 tokens
         trimmed_answer = trim_predictions_to_max_token_length(answer)
-        
+
         return trimmed_answer

@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import Dict, List
 
 import numpy as np
 import torch
@@ -16,10 +16,10 @@ from transformers import (
 ###
 ### IMPORTANT !!!
 ### Before submitting, please follow the instructions in the docs below to download and check in :
-### the model weighs. 
-### 
+### the model weighs.
+###
 ###  https://gitlab.aicrowd.com/aicrowd/challenges/meta-comprehensive-rag-benchmark-kdd-cup-2024/meta-comphrehensive-rag-benchmark-starter-kit/-/blob/master/docs/download_baseline_model_weights.md
-### 
+###
 ###
 ### DISCLAIMER: This baseline has NOT been tuned for performance
 ###             or efficiency, and is provided as is for demonstration.
@@ -37,6 +37,7 @@ from transformers import (
 # **Note**: This environment variable will not be available for Task 1 evaluations.
 CRAG_MOCK_API_URL = os.getenv("CRAG_MOCK_API_URL", "http://localhost:8000")
 
+
 class ChatModel:
     def __init__(self):
         """
@@ -49,7 +50,7 @@ class ChatModel:
 {query}
 
 ### Answer"""
-        
+
         bnb_config = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_compute_dtype=torch.float16,
@@ -58,40 +59,44 @@ class ChatModel:
         )
 
         model_name = "models/meta-llama/Llama-2-7b-chat-hf"
-        
+
         if not os.path.exists(model_name):
-            raise Exception(f"""
+            raise Exception(
+                f"""
             The evaluators expect the model weights to be checked into the repository,
             but we could not find the model weights at {model_name}
             
             Please follow the instructions in the docs below to download and check in the model weights.
             
             https://gitlab.aicrowd.com/aicrowd/challenges/meta-comprehensive-rag-benchmark-kdd-cup-2024/meta-comphrehensive-rag-benchmark-starter-kit/-/blob/master/docs/dataset.md
-            """)
+            """
+            )
 
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
         self.llm = AutoModelForCausalLM.from_pretrained(
             model_name,
-            device_map='auto',
+            device_map="auto",
             quantization_config=bnb_config,
             torch_dtype=torch.float16,
         )
 
-        self.generation_pipe = pipeline(task="text-generation",
-                                        model=self.llm,
-                                        tokenizer=self.tokenizer,
-                                        max_new_tokens=75)
+        self.generation_pipe = pipeline(
+            task="text-generation",
+            model=self.llm,
+            tokenizer=self.tokenizer,
+            max_new_tokens=75,
+        )
 
-    def generate_answer(self, query: str, search_results: List[str]) -> str:
+    def generate_answer(self, query: str, search_results: List[Dict]) -> str:
         """
         Generate an answer based on a provided query and a list of pre-cached search results.
 
         Parameters:
         - query (str): The user's question or query input.
-        - search_results (List[str]): A list containing the text content from web pages
-          retrieved as search results for the query. Each element in the list is a string
-          representing the HTML text of a web page.
+        - search_results (List[Dict]): A list containing the search result objects,
+          as described here:
+          https://gitlab.aicrowd.com/aicrowd/challenges/meta-comprehensive-rag-benchmark-kdd-cup-2024/meta-comphrehensive-rag-benchmark-starter-kit/-/blob/master/docs/dataset.md#search-results-detail
 
         Returns:
         - (str): A plain text response that answers the query. This response is limited to 75 tokens.
@@ -105,10 +110,10 @@ class ChatModel:
         """
 
         final_prompt = self.prompt_template.format(query=query)
-        result = self.generation_pipe(final_prompt)[0]['generated_text']
+        result = self.generation_pipe(final_prompt)[0]["generated_text"]
         answer = result.split("### Answer")[1].strip()
-                
+
         # Trim prediction to a max of 75 tokens
         trimmed_answer = trim_predictions_to_max_token_length(answer)
-        
+
         return trimmed_answer
