@@ -34,6 +34,7 @@ This repository is the CRAG: Comphrensive RAG Benchmark **Submission template an
 
 # 📊 Dataset
 
+Please find more details about the dataset in [docs/dataset.md](docs/dataset.md).
 
 # 👨‍💻👩‍💻 Tasks  
 
