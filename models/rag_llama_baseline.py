@@ -126,9 +126,7 @@ class RAGModel:
         # Process each HTML text from the search results to extract text content.
         for html_text in search_results:
             # Parse the HTML content to extract text.
-            soup = BeautifulSoup(
-                html_text["page_result"], features="html.parser"
-            )
+            soup = BeautifulSoup(html_text["page_result"], features="lxml")
             text = soup.get_text().replace("\n", "")
             if len(text) > 0:
                 # Convert the text into sentences and extract their offsets.
@@ -179,7 +177,7 @@ class RAGModel:
             # If the model fails to generate an answer, return a default response.
             answer = "I don't know"
 
-        # Trim the prediction to a maximum of 75 tokens (this function needs to be defined).
+        # Trim the prediction to a maximum of 75 tokens to meet the submission requirements.
         trimmed_answer = trim_predictions_to_max_token_length(answer)
 
         return trimmed_answer

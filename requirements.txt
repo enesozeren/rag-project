@@ -5,6 +5,7 @@ blingfire
 hf-transfer
 huggingface-hub
 loguru
+lxml
 openai==1.13.3
 sentence_transformers
 torch
