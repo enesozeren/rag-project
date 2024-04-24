@@ -15,6 +15,7 @@ To ensure your model is recognized and utilized correctly, please specify your m
 Your model will receive two pieces of information for every task:
 - `query`: String representing the input query
 - `search_results`: List of strings, each comes from scraped HTML text of the search query.
+- `query_time`: The time at which the query was made, represented as a string.
 
 ### Outputs
 The output from your model's `generate_answer` function should always be a string.

@@ -77,27 +77,32 @@ def parse_response(resp: str):
     except:
         return -1
 
+
 def trim_predictions_to_max_token_length(prediction):
     """Trims prediction output to 75 tokens"""
     max_token_length = 75
     tokenized_prediction = tokenizer.encode(prediction)
-    trimmed_tokenized_prediction = tokenized_prediction[1: max_token_length+1]
+    trimmed_tokenized_prediction = tokenized_prediction[
+        1 : max_token_length + 1
+    ]
     trimmed_prediction = tokenizer.decode(trimmed_tokenized_prediction)
     return trimmed_prediction
 
-def generate_predictions(dataset_path, participant_model):    
+
+def generate_predictions(dataset_path, participant_model):
     predictions = []
     with bz2.open(DATASET_PATH, "rt") as bz2_file:
         for line in tqdm(bz2_file, desc="Generating Predictions"):
             data = json.loads(line)
-            
+
             query = data["query"]
             web_search_results = data["search_results"]
-            
+            query_time = data["query_time"]
+
             prediction = participant_model.generate_answer(
-                query, web_search_results
+                query, web_search_results, query_time
             )
-            
+
             # trim prediction to 75 tokens
             prediction = trim_predictions_to_max_token_length(prediction)
             predictions.append(
@@ -106,7 +111,7 @@ def generate_predictions(dataset_path, participant_model):
                     "ground_truth": str(data["answer"]).strip().lower(),
                     "prediction": str(prediction).strip().lower(),
                 }
-            )            
+            )
 
     return predictions
 
@@ -115,7 +120,9 @@ def evaluate_predictions(predictions, evaluation_model_name, openai_client):
     n_miss, n_correct, n_correct_exact = 0, 0, 0
     system_message = get_system_message()
 
-    for prediction_dict in tqdm(predictions, total=len(predictions), desc="Evaluating Predictions"):
+    for prediction_dict in tqdm(
+        predictions, total=len(predictions), desc="Evaluating Predictions"
+    ):
         query, ground_truth, prediction = (
             prediction_dict["query"],
             prediction_dict["ground_truth"],

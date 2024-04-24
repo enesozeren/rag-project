@@ -88,7 +88,9 @@ class ChatModel:
             max_new_tokens=75,
         )
 
-    def generate_answer(self, query: str, search_results: List[Dict]) -> str:
+    def generate_answer(
+        self, query: str, search_results: List[Dict], query_time: str
+    ) -> str:
         """
         Generate an answer based on a provided query and a list of pre-cached search results.
 
@@ -97,6 +99,7 @@ class ChatModel:
         - search_results (List[Dict]): A list containing the search result objects,
           as described here:
           https://gitlab.aicrowd.com/aicrowd/challenges/meta-comprehensive-rag-benchmark-kdd-cup-2024/meta-comphrehensive-rag-benchmark-starter-kit/-/blob/master/docs/dataset.md#search-results-detail
+        - query_time (str): The time at which the query was made, represented as a string.
 
         Returns:
         - (str): A plain text response that answers the query. This response is limited to 75 tokens.
