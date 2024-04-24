@@ -15,8 +15,8 @@ Besides, the following restrictions will also be imposed:
 
 - Network connection will be disabled.
 - Each submission will be assigned a certain amount of time to run. Submissions that exceed the time limits will be killed and will not be evaluated. The tentative time limit is set as follows : 
-- `10s` timeout for each sample prediction.
-- Overall timeout of `2600s` fot 260 samples.
+- `30s` timeout for each sample prediction.
+- Overall timeout of `7620s` fot 254 samples.
 
 - Each team will be able to make up to **4 submissions per week per track**, and will be allowed an additional quota of upto **4 failed submissions per task per week**.
 
