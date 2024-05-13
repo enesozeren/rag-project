@@ -34,7 +34,7 @@ Retrieval contents are divided into two types to simulate practical scenarios fo
 | `static_or_dynamic`    | string        | Indicates whether the answer to a question changes and the expected rate of change. Possible values: "static", "slow-changing", "fast-changing", and "real-time".    |
 | `query`                | string        | The question for RAG to answer.                                                                                                                                       |
 | `answer`               | string        | The gold standard answer to the question.                                                                                                                             |
-| `alternative_answers`  | list        | Other valid gold standard answers to the question.                                                                                                                    |
+| `alt_ans`  | list        | Other valid gold standard answers to the question.                                                                                                                    |
 | `split`                | integer       | Data split indicator, where 0 is for validation and 1 is for the public test.                                                                                         |
 | `search_results`       | list of JSON  | Contains up to `k` HTML pages for each query (`k=5` for Task #1 and `k=50` for Task #3), including page name, URL, snippet, full HTML, and last modified time.         |
 
