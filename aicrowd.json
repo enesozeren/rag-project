@@ -1,9 +1,12 @@
 {
     "challenge_id": "meta-kdd-cup-24-crag-retrieval-summarization",
     "authors": [
-      "aicrowd-bot"
+      "ercong_nie",
+      "enes_ozeren",
+      "julia_broden",
+      "dgloukhman"
     ],
-    "gpu": false,
-    "gpu_count": 0,
-    "description": "(optional) description about your awesome agent"
+    "gpu": true,
+    "gpu_count": 2,
+    "description": "our baseline agent"
 }
