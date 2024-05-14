@@ -35,6 +35,17 @@ from models.utils import trim_predictions_to_max_token_length
 CRAG_MOCK_API_URL = os.getenv("CRAG_MOCK_API_URL", "http://localhost:8000")
 
 
+#### CONFIG PARAMETERS ---
+
+# Batch size you wish the evaluators will use to call the `batch_generate_answer` function
+AICROWD_SUBMISSION_BATCH_SIZE = 8 # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
+
+# VLLM Parameters 
+VLLM_TENSOR_PARALLEL_SIZE = 4 # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
+VLLM_GPU_MEMORY_UTILIZATION = 0.85 # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
+
+#### CONFIG PARAMETERS END---
+
 class InstructModel:
     def __init__(self):
         """
@@ -63,8 +74,8 @@ class InstructModel:
         # initialize the model with vllm
         self.llm = vllm.LLM(
             self.model_name,
-            tensor_parallel_size=4,  # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
-            gpu_memory_utilization=0.85,  # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
+            tensor_parallel_size=VLLM_TENSOR_PARALLEL_SIZE, 
+            gpu_memory_utilization=VLLM_GPU_MEMORY_UTILIZATION, 
             trust_remote_code=True,
             dtype="half", # note: bfloat16 is not supported on nvidia-T4 GPUs
             enforce_eager=True
@@ -80,7 +91,7 @@ class InstructModel:
                  queries should be processed together in a single batch. It can be dynamic
                  across different batch_generate_answer calls, or stay a static value.
         """
-        self.batch_size = 8 # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
+        self.batch_size = AICROWD_SUBMISSION_BATCH_SIZE  
         return self.batch_size
 
     def batch_generate_answer(self, batch: Dict[str, Any]) -> List[str]:

@@ -38,12 +38,27 @@ from sentence_transformers import SentenceTransformer
 # **Note**: This environment variable will not be available for Task 1 evaluations.
 CRAG_MOCK_API_URL = os.getenv("CRAG_MOCK_API_URL", "http://localhost:8000")
 
+
+#### CONFIG PARAMETERS ---
+
 # Define the number of context sentences to consider for generating an answer.
 NUM_CONTEXT_SENTENCES = 20
 # Set the maximum length for each context sentence (in characters).
 MAX_CONTEXT_SENTENCE_LENGTH = 1000
 # Set the maximum context references length (in characters).
 MAX_CONTEXT_REFERENCES_LENGTH = 4000
+
+# Batch size you wish the evaluators will use to call the `batch_generate_answer` function
+AICROWD_SUBMISSION_BATCH_SIZE = 8 # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
+
+# VLLM Parameters 
+VLLM_TENSOR_PARALLEL_SIZE = 4 # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
+VLLM_GPU_MEMORY_UTILIZATION = 0.85 # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
+
+# Sentence Transformer Parameters
+SENTENTENCE_TRANSFORMER_BATCH_SIZE = 128 # TUNE THIS VARIABLE depending on the size of your embedding model and GPU mem available
+
+#### CONFIG PARAMETERS END---
 
 class ChunkExtractor:
 
@@ -173,8 +188,8 @@ class RAGModel:
         # Initialize the model with vllm
         self.llm = vllm.LLM(
             self.model_name,
-            tensor_parallel_size=4,  # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
-            gpu_memory_utilization=0.85,  # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
+            tensor_parallel_size=VLLM_TENSOR_PARALLEL_SIZE, 
+            gpu_memory_utilization=VLLM_GPU_MEMORY_UTILIZATION, 
             trust_remote_code=True,
             dtype="half", # note: bfloat16 is not supported on nvidia-T4 GPUs
             enforce_eager=True
@@ -188,7 +203,6 @@ class RAGModel:
                 "cuda" if torch.cuda.is_available() else "cpu"
             ),
         )
-        self.sentence_model_inference_batch_size = 128  # TUNE THIS VARIABLE depending on the size of your embedding model and GPU mem available
 
     def calculate_embeddings(self, sentences):
         """
@@ -207,7 +221,7 @@ class RAGModel:
         embeddings = self.sentence_model.encode(
             sentences=sentences,
             normalize_embeddings=True,
-            batch_size=self.sentence_model_inference_batch_size,
+            batch_size=SENTENTENCE_TRANSFORMER_BATCH_SIZE,
         )
         # Note: There is an opportunity to parallelize the embedding generation across 4 GPUs
         #       but sentence_model.encode_multi_process seems to interefere with Ray
@@ -228,7 +242,7 @@ class RAGModel:
             int: The batch size, an integer between 1 and 16. It can be dynamic
                  across different batch_generate_answer calls, or stay a static value.
         """
-        self.batch_size = 8  # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
+        self.batch_size = AICROWD_SUBMISSION_BATCH_SIZE  
         return self.batch_size
 
     def batch_generate_answer(self, batch: Dict[str, Any]) -> List[str]:
