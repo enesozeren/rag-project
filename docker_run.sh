@@ -49,6 +49,7 @@ docker run \
     -v "$(pwd)":/submission \
     -w /submission \
     -e OPENAI_API_KEY=$OPENAI_API_KEY \
+    --ipc=host \
     $IMAGE_NAME python local_evaluation.py
 
 # Note: We assume you have nvidia-container-toolkit installed and configured 
