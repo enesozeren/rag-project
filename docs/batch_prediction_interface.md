@@ -37,6 +37,7 @@ Your submitted models can now make batch predictions on the test set, allowing y
     ```
 
     - The new function should return a list of answers (`List[str]`) instead of a single answer (`str`).
+    - This function is a **required** interface for your model class.    
     - The simplest example of a valid submission with the new interface is as follows:
 
     ```python
