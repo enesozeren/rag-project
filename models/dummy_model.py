@@ -57,7 +57,7 @@ class DummyModel:
         Notes:
         - If the correct answer is uncertain, it's preferable to respond with "I don't know" to avoid
           the penalty for hallucination.
-        - Response Time: Ensure that your model processes and responds to each query within 10 seconds.
+        - Response Time: Ensure that your model processes and responds to each query within 30 seconds.
           Failing to adhere to this time constraint **will** result in a timeout during evaluation.
         """
         batch_interaction_ids = batch["interaction_id"]
