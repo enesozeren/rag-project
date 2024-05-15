@@ -1,7 +1,7 @@
 ### Setting Up and Downloading Baseline Model weighta with Hugging Face
 
 This guide outlines the steps to download (and check in) the models weights required for the baseline models.
-We will focus on the `Llama-2-7b-chat-hf` and `all-MiniLM-L6-v2` models.
+We will focus on the `Meta-Llama-3-8B-Instruct` and `all-MiniLM-L6-v2` models.
 But the steps should work equally well for any other models on hugging face. 
 
 #### Preliminary Steps:
@@ -16,7 +16,7 @@ But the steps should work equally well for any other models on hugging face.
 
 2. **Accept the LLaMA Terms**:
    
-   You must accept the LLaMA model's terms of use by visiting: [LLaMA-2-7b-chat-hf Terms](https://huggingface.co/meta-llama/Llama-2-7b-chat-hf).
+   You must accept the LLaMA model's terms of use by visiting: [meta-llama/Meta-Llama-3-8B-Instruct Terms](https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct).
 
 3. **Create a Hugging Face CLI Token**:
    
@@ -38,14 +38,14 @@ But the steps should work equally well for any other models on hugging face.
 
 1. **Download LLaMA-2-7b Model**:
 
-   Execute the following command to download the `Llama-2-7b-chat-hf` model to a local subdirectory. This command excludes unnecessary files to save space:
+   Execute the following command to download the `Meta-Llama-3-8B-Instruct` model to a local subdirectory. This command excludes unnecessary files to save space:
 
    ```bash
    HF_HUB_ENABLE_HF_TRANSFER=1 huggingface-cli download \
-       meta-llama/Llama-2-7b-chat-hf \
+       meta-llama/Meta-Llama-3-8B-Instruct \
        --local-dir-use-symlinks False \
-       --local-dir models/meta-llama/Llama-2-7b-chat-hf \
-       --exclude *.bin # These are alternates to the safetensors hence not needed
+       --local-dir models/meta-llama/Meta-Llama-3-8B-Instruct \
+       --exclude *.pth # These are alternates to the safetensors hence not needed
    ```
 
 3. **Download MiniLM-L6-v2 Model (for sentence embeddings)**:

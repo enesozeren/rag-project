@@ -1,15 +1,10 @@
 import os
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import numpy as np
 import torch
+import vllm
 from models.utils import trim_predictions_to_max_token_length
-from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    BitsAndBytesConfig,
-    pipeline,
-)
 
 ######################################################################################################
 ######################################################################################################
@@ -20,6 +15,8 @@ from transformers import (
 ###
 ###  https://gitlab.aicrowd.com/aicrowd/challenges/meta-comprehensive-rag-benchmark-kdd-cup-2024/meta-comphrehensive-rag-benchmark-starter-kit/-/blob/master/docs/download_baseline_model_weights.md
 ###
+### And please pay special attention to the comments that start with "TUNE THIS VARIABLE"
+###                        as they depend on your model and the available GPU resources.
 ###
 ### DISCLAIMER: This baseline has NOT been tuned for performance
 ###             or efficiency, and is provided as is for demonstration.
@@ -38,33 +35,35 @@ from transformers import (
 CRAG_MOCK_API_URL = os.getenv("CRAG_MOCK_API_URL", "http://localhost:8000")
 
 
-class ChatModel:
+#### CONFIG PARAMETERS ---
+
+# Batch size you wish the evaluators will use to call the `batch_generate_answer` function
+AICROWD_SUBMISSION_BATCH_SIZE = 8 # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
+
+# VLLM Parameters 
+VLLM_TENSOR_PARALLEL_SIZE = 4 # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
+VLLM_GPU_MEMORY_UTILIZATION = 0.85 # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
+
+#### CONFIG PARAMETERS END---
+
+class InstructModel:
     def __init__(self):
         """
         Initialize your model(s) here if necessary.
         This is the constructor for your DummyModel class, where you can set up any
         required initialization steps for your model(s) to function correctly.
         """
-        self.prompt_template = """You are given a quesition and references which may or may not help answer the question. Your goal is to answer the question in as few words as possible.
-### Question
-{query}
+        self.initialize_models()
 
-### Answer"""
+    def initialize_models(self):
+        # Initialize Meta Llama 3 - 8B Instruct Model
+        self.model_name = "models/meta-llama/Meta-Llama-3-8B-Instruct"
 
-        bnb_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_compute_dtype=torch.float16,
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_use_double_quant=False,
-        )
-
-        model_name = "models/meta-llama/Llama-2-7b-chat-hf"
-
-        if not os.path.exists(model_name):
+        if not os.path.exists(self.model_name):
             raise Exception(
                 f"""
             The evaluators expect the model weights to be checked into the repository,
-            but we could not find the model weights at {model_name}
+            but we could not find the model weights at {self.model_name}
             
             Please follow the instructions in the docs below to download and check in the model weights.
             
@@ -72,38 +71,46 @@ class ChatModel:
             """
             )
 
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-        self.llm = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            device_map="auto",
-            quantization_config=bnb_config,
-            torch_dtype=torch.float16,
+        # initialize the model with vllm
+        self.llm = vllm.LLM(
+            self.model_name,
+            tensor_parallel_size=VLLM_TENSOR_PARALLEL_SIZE, 
+            gpu_memory_utilization=VLLM_GPU_MEMORY_UTILIZATION, 
+            trust_remote_code=True,
+            dtype="half", # note: bfloat16 is not supported on nvidia-T4 GPUs
+            enforce_eager=True
         )
+        self.tokenizer = self.llm.get_tokenizer()
 
-        self.generation_pipe = pipeline(
-            task="text-generation",
-            model=self.llm,
-            tokenizer=self.tokenizer,
-            max_new_tokens=75,
-        )
-
-    def generate_answer(
-        self, query: str, search_results: List[Dict], query_time: str
-    ) -> str:
+    def get_batch_size(self) -> int:
         """
-        Generate an answer based on a provided query and a list of pre-cached search results.
-
-        Parameters:
-        - query (str): The user's question or query input.
-        - search_results (List[Dict]): A list containing the search result objects,
-          as described here:
-          https://gitlab.aicrowd.com/aicrowd/challenges/meta-comprehensive-rag-benchmark-kdd-cup-2024/meta-comphrehensive-rag-benchmark-starter-kit/-/blob/master/docs/dataset.md#search-results-detail
-        - query_time (str): The time at which the query was made, represented as a string.
+        Determines the batch size that is used by the evaluator when calling the `batch_generate_answer` function.
 
         Returns:
-        - (str): A plain text response that answers the query. This response is limited to 75 tokens.
-          If the generated response exceeds 75 tokens, it will be truncated to fit within this limit.
+            int: The batch size, an integer between 1 and 16. This value indicates how many
+                 queries should be processed together in a single batch. It can be dynamic
+                 across different batch_generate_answer calls, or stay a static value.
+        """
+        self.batch_size = AICROWD_SUBMISSION_BATCH_SIZE  
+        return self.batch_size
+
+    def batch_generate_answer(self, batch: Dict[str, Any]) -> List[str]:
+        """
+        Generates answers for a batch of queries using associated (pre-cached) search results and query times.
+
+        Parameters:
+            batch (Dict[str, Any]): A dictionary containing a batch of input queries with the following keys:
+                - 'interaction_id;  (List[str]): List of interaction_ids for the associated queries
+                - 'query' (List[str]): List of user queries.
+                - 'search_results' (List[List[Dict]]): List of search result lists, each corresponding
+                                                      to a query. Please refer to the following link for
+                                                      more details about the individual search objects:
+                                                      https://gitlab.aicrowd.com/aicrowd/challenges/meta-comprehensive-rag-benchmark-kdd-cup-2024/meta-comphrehensive-rag-benchmark-starter-kit/-/blob/master/docs/dataset.md#search-results-detail
+                - 'query_time' (List[str]): List of timestamps (represented as a string), each corresponding to when a query was made.
+
+        Returns:
+            List[str]: A list of plain text responses for each query in the batch. Each response is limited to 75 tokens.
+            If the generated response exceeds 75 tokens, it will be truncated to fit within this limit.
 
         Notes:
         - If the correct answer is uncertain, it's preferable to respond with "I don't know" to avoid
@@ -111,12 +118,64 @@ class ChatModel:
         - Response Time: Ensure that your model processes and responds to each query within 10 seconds.
           Failing to adhere to this time constraint **will** result in a timeout during evaluation.
         """
+        batch_interaction_ids = batch["interaction_id"]
+        queries = batch["query"]
+        batch_search_results = batch["search_results"]
+        query_times = batch["query_time"]
 
-        final_prompt = self.prompt_template.format(query=query)
-        result = self.generation_pipe(final_prompt)[0]["generated_text"]
-        answer = result.split("### Answer")[1].strip()
+        formatted_prompts = self.format_prommpts(queries, query_times)
 
-        # Trim prediction to a max of 75 tokens
-        trimmed_answer = trim_predictions_to_max_token_length(answer)
+        # Generate responses via vllm
+        responses = self.llm.generate(
+            formatted_prompts,
+            vllm.SamplingParams(
+                n=1,  # Number of output sequences to return for each prompt.
+                top_p=0.9,  # Float that controls the cumulative probability of the top tokens to consider.
+                temperature=0.1,  # randomness of the sampling
+                skip_special_tokens=True,  # Whether to skip special tokens in the output.
+                max_tokens=50,  # Maximum number of tokens to generate per output sequence.
+                # Note: We are using 50 max new tokens instead of 75,
+                # because the 75 max token limit is checked using the Llama2 tokenizer.
+                # The Llama3 model instead uses a differet tokenizer with a larger vocabulary
+                # This allows it to represent the same content more efficiently, using fewer tokens.
+            ),
+            use_tqdm = False
+        )
 
-        return trimmed_answer
+        # Aggregate answers into List[str]
+        answers = []
+        for response in responses:
+            answers.append(response.outputs[0].text)
+
+        return answers
+
+    def format_prommpts(self, queries, query_times):
+        """
+        Formats queries and corresponding query_times using the chat_template of the model.
+            
+        Parameters:
+        - queries (list of str): A list of queries to be formatted into prompts.
+        - query_times (list of str): A list of query_time strings corresponding to each query.
+            
+        """
+        system_prompt = "You are provided with a question and various references. Your task is to answer the question succinctly, using the fewest words possible. If the references do not contain the necessary information to answer the question, respond with 'I don't know'."
+        formatted_prompts = []
+
+        for _idx, query in enumerate(queries):
+            query_time = query_times[_idx]
+            user_message = ""
+            user_message += f"Current Time: {query_time}\n"
+            user_message += f"Question: {query}\n"
+
+            formatted_prompts.append(
+                self.tokenizer.apply_chat_template(
+                    [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_message},
+                    ],
+                    tokenize=False,
+                    add_generation_prompt=True,
+                )
+            )
+
+        return formatted_prompts

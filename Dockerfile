@@ -1,14 +1,14 @@
 ## This is an example Dokerfile you can change to make submissions on aicrowd
 ## To use it, place it in the base of the repo, and remove the underscore (_) from the filename
 
-FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu20.04
+FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 COPY apt.txt /tmp/apt.txt
 RUN apt -qq update && apt -qq install -y --no-install-recommends `cat /tmp/apt.txt` \
  && rm -rf /var/cache/*
-RUN apt install -y locales wget
+RUN apt install -y locales wget build-essential
 
 # Unicode support:
 RUN locale-gen en_US.UTF-8
