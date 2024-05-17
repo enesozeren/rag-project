@@ -9,7 +9,7 @@ Please note that these baselines are **NOT** tuned for performance or efficiency
 
 1. [**Vanilla Llama 3 Model**](../models/vanilla_llama_baseline.py): For an implementation guide and further details, refer to the Vanilla Llama 3 model inline documentation [here](../models/vanilla_llama_baseline.py).
 
-2. [**RAG Baseline Model**](../models/rag_llm_model.py): For an implementation guide and further details, refer to the RAG Baseline model inline documentation [here](../models/rag_llm_model.py).
+2. [**RAG Baseline Model**](../models/rag_llama_baseline.py): For an implementation guide and further details, refer to the RAG Baseline model inline documentation [here](../models/rag_llama_baseline.py).
 
 ## Preparing Your Submission:
 
