@@ -80,4 +80,4 @@ But the steps should work equally well for any other models on hugging face.
    git commit -am "add weights"
    git push origin master
    ```
-
+If you are struggling with GIT-LFS, you are very much encouraged to check out [this post](https://discourse.aicrowd.com/t/how-to-upload-large-files-size-to-your-submission/2304).
