@@ -1,164 +1,13 @@
 import os
-from collections import defaultdict
 from typing import Any, Dict, List
 
-import numpy as np
-import ray
 import torch
 import vllm
-from blingfire import text_to_sentences_and_offsets
-from bs4 import BeautifulSoup
 from sentence_transformers import SentenceTransformer
 
-######################################################################################################
-######################################################################################################
-###
-### IMPORTANT !!!
-### Before submitting, please follow the instructions in the docs below to download and check in :
-### the model weighs.
-###
-###  https://gitlab.aicrowd.com/aicrowd/challenges/meta-comprehensive-rag-benchmark-kdd-cup-2024/meta-comphrehensive-rag-benchmark-starter-kit/-/blob/master/docs/download_baseline_model_weights.md
-###
-### And please pay special attention to the comments that start with "TUNE THIS VARIABLE"
-###                        as they depend on your model and the available GPU resources.
-###
-### DISCLAIMER: This baseline has NOT been tuned for performance
-###             or efficiency, and is provided as is for demonstration.
-######################################################################################################
-
-
-# Load the environment variable that specifies the URL of the MockAPI. This URL is essential
-# for accessing the correct API endpoint in Task 2 and Task 3. The value of this environment variable
-# may vary across different evaluation settings, emphasizing the importance of dynamically obtaining
-# the API URL to ensure accurate endpoint communication.
-
-# Please refer to https://gitlab.aicrowd.com/aicrowd/challenges/meta-comprehensive-rag-benchmark-kdd-cup-2024/crag-mock-api
-# for more information on the MockAPI.
-#
-# **Note**: This environment variable will not be available for Task 1 evaluations.
-CRAG_MOCK_API_URL = os.getenv("CRAG_MOCK_API_URL", "http://localhost:8000")
-
-
-#### CONFIG PARAMETERS ---
-
-# Define the number of context sentences to consider for generating an answer.
-NUM_CONTEXT_SENTENCES = 20
-# Set the maximum length for each context sentence (in characters).
-MAX_CONTEXT_SENTENCE_LENGTH = 1000
-# Set the maximum context references length (in characters).
-MAX_CONTEXT_REFERENCES_LENGTH = 4000
-
-# Batch size you wish the evaluators will use to call the `batch_generate_answer` function
-AICROWD_SUBMISSION_BATCH_SIZE = 8 # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
-
-# VLLM Parameters 
-VLLM_TENSOR_PARALLEL_SIZE = 4 # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
-VLLM_GPU_MEMORY_UTILIZATION = 0.85 # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
-
-# Sentence Transformer Parameters
-SENTENTENCE_TRANSFORMER_BATCH_SIZE = 128 # TUNE THIS VARIABLE depending on the size of your embedding model and GPU mem available
-
-#### CONFIG PARAMETERS END---
-
-class ChunkExtractor:
-
-    @ray.remote
-    def _extract_chunks(self, interaction_id, html_source):
-        """
-        Extracts and returns chunks from given HTML source.
-
-        Note: This function is for demonstration purposes only.
-        We are treating an independent sentence as a chunk here,
-        but you could choose to chunk your text more cleverly than this.
-
-        Parameters:
-            interaction_id (str): Interaction ID that this HTML source belongs to.
-            html_source (str): HTML content from which to extract text.
-
-        Returns:
-            Tuple[str, List[str]]: A tuple containing the interaction ID and a list of sentences extracted from the HTML content.
-        """
-        # Parse the HTML content using BeautifulSoup
-        soup = BeautifulSoup(html_source, "lxml")
-        text = soup.get_text(" ", strip=True)  # Use space as a separator, strip whitespaces
-
-        if not text:
-            # Return a list with empty string when no text is extracted
-            return interaction_id, [""]
-
-        # Extract offsets of sentences from the text
-        _, offsets = text_to_sentences_and_offsets(text)
-
-        # Initialize a list to store sentences
-        chunks = []
-
-        # Iterate through the list of offsets and extract sentences
-        for start, end in offsets:
-            # Extract the sentence and limit its length
-            sentence = text[start:end][:MAX_CONTEXT_SENTENCE_LENGTH]
-            chunks.append(sentence)
-
-        return interaction_id, chunks
-
-    def extract_chunks(self, batch_interaction_ids, batch_search_results):
-        """
-        Extracts chunks from given batch search results using parallel processing with Ray.
-
-        Parameters:
-            batch_interaction_ids (List[str]): List of interaction IDs.
-            batch_search_results (List[List[Dict]]): List of search results batches, each containing HTML text.
-
-        Returns:
-            Tuple[np.ndarray, np.ndarray]: A tuple containing an array of chunks and an array of corresponding interaction IDs.
-        """
-        # Setup parallel chunk extraction using ray remote
-        ray_response_refs = [
-            self._extract_chunks.remote(
-                self,
-                interaction_id=batch_interaction_ids[idx],
-                html_source=html_text["page_result"]
-            )
-            for idx, search_results in enumerate(batch_search_results)
-            for html_text in search_results
-        ]
-
-        # Wait until all sentence extractions are complete
-        # and collect chunks for every interaction_id separately
-        chunk_dictionary = defaultdict(list)
-
-        for response_ref in ray_response_refs:
-            interaction_id, _chunks = ray.get(response_ref)  # Blocking call until parallel execution is complete
-            chunk_dictionary[interaction_id].extend(_chunks)
-
-        # Flatten chunks and keep a map of corresponding interaction_ids
-        chunks, chunk_interaction_ids = self._flatten_chunks(chunk_dictionary)
-
-        return chunks, chunk_interaction_ids
-
-    def _flatten_chunks(self, chunk_dictionary):
-        """
-        Flattens the chunk dictionary into separate lists for chunks and their corresponding interaction IDs.
-
-        Parameters:
-            chunk_dictionary (defaultdict): Dictionary with interaction IDs as keys and lists of chunks as values.
-
-        Returns:
-            Tuple[np.ndarray, np.ndarray]: A tuple containing an array of chunks and an array of corresponding interaction IDs.
-        """
-        chunks = []
-        chunk_interaction_ids = []
-
-        for interaction_id, _chunks in chunk_dictionary.items():
-            # De-duplicate chunks within the scope of an interaction ID
-            unique_chunks = list(set(_chunks))
-            chunks.extend(unique_chunks)
-            chunk_interaction_ids.extend([interaction_id] * len(unique_chunks))
-
-        # Convert to numpy arrays for convenient slicing/masking operations later
-        chunks = np.array(chunks)
-        chunk_interaction_ids = np.array(chunk_interaction_ids)
-
-        return chunks, chunk_interaction_ids
+from models.chunk_extractor import ChunkExtractor
+# Import the hyperparameters
+from config.variables import ChatModelParams, EmbeddingModelParams, RagSystemParams
 
 class RAGModel:
     """
@@ -188,8 +37,8 @@ class RAGModel:
         # Initialize the model with vllm
         self.llm = vllm.LLM(
             self.model_name,
-            tensor_parallel_size=VLLM_TENSOR_PARALLEL_SIZE, 
-            gpu_memory_utilization=VLLM_GPU_MEMORY_UTILIZATION, 
+            tensor_parallel_size=ChatModelParams.VLLM_TENSOR_PARALLEL_SIZE, 
+            gpu_memory_utilization=ChatModelParams.VLLM_GPU_MEMORY_UTILIZATION, 
             trust_remote_code=True,
             dtype="half", # note: bfloat16 is not supported on nvidia-T4 GPUs
             enforce_eager=True
@@ -221,7 +70,7 @@ class RAGModel:
         embeddings = self.sentence_model.encode(
             sentences=sentences,
             normalize_embeddings=True,
-            batch_size=SENTENTENCE_TRANSFORMER_BATCH_SIZE,
+            batch_size=EmbeddingModelParams.SENTENTENCE_TRANSFORMER_BATCH_SIZE,
         )
         # Note: There is an opportunity to parallelize the embedding generation across 4 GPUs
         #       but sentence_model.encode_multi_process seems to interefere with Ray
@@ -242,7 +91,7 @@ class RAGModel:
             int: The batch size, an integer between 1 and 16. It can be dynamic
                  across different batch_generate_answer calls, or stay a static value.
         """
-        self.batch_size = AICROWD_SUBMISSION_BATCH_SIZE  
+        self.batch_size = RagSystemParams.AICROWD_SUBMISSION_BATCH_SIZE  
         return self.batch_size
 
     def batch_generate_answer(self, batch: Dict[str, Any]) -> List[str]:
@@ -304,7 +153,7 @@ class RAGModel:
 
             # and retrieve top-N results.
             retrieval_results = relevant_chunks[
-                (-cosine_scores).argsort()[:NUM_CONTEXT_SENTENCES]
+                (-cosine_scores).argsort()[:RagSystemParams.NUM_CONTEXT_SENTENCES]
             ]
             
             # You might also choose to skip the steps above and 
@@ -318,17 +167,11 @@ class RAGModel:
         responses = self.llm.generate(
             formatted_prompts,
             vllm.SamplingParams(
-                n=1,  # Number of output sequences to return for each prompt.
-                top_p=0.9,  # Float that controls the cumulative probability of the top tokens to consider.
-                temperature=0.1,  # Randomness of the sampling
-                skip_special_tokens=True,  # Whether to skip special tokens in the output.
-                max_tokens=50,  # Maximum number of tokens to generate per output sequence.
-                
-                # Note: We are using 50 max new tokens instead of 75,
-                # because the 75 max token limit for the competition is checked using the Llama2 tokenizer.
-                # Llama3 instead uses a different tokenizer with a larger vocabulary
-                # This allows the Llama3 tokenizer to represent the same content more efficiently, 
-                # while using fewer tokens.
+                n=ChatModelParams.N_OUT_SEQ,
+                top_p=ChatModelParams.TOP_P,
+                temperature=ChatModelParams.TEMPERATURE,
+                skip_special_tokens=ChatModelParams.SKIP_SPECIAL_TOKENS,
+                max_tokens=ChatModelParams.MAX_TOKENS
             ),
             use_tqdm=False # you might consider setting this to True during local development
         )
@@ -365,7 +208,7 @@ class RAGModel:
                 for _snippet_idx, snippet in enumerate(retrieval_results):
                     references += f"- {snippet.strip()}\n"
             
-            references = references[:MAX_CONTEXT_REFERENCES_LENGTH]
+            references = references[:RagSystemParams.MAX_CONTEXT_REFERENCES_LENGTH]
             # Limit the length of references to fit the model's input size.
 
             user_message += f"{references}\n------\n\n"
