@@ -1,18 +1,14 @@
 import os
-from typing import Dict, List
+from collections import defaultdict
+from typing import Any, Dict, List
 
 import numpy as np
+import ray
 import torch
+import vllm
 from blingfire import text_to_sentences_and_offsets
 from bs4 import BeautifulSoup
-from models.utils import trim_predictions_to_max_token_length
 from sentence_transformers import SentenceTransformer
-from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    BitsAndBytesConfig,
-    pipeline,
-)
 
 ######################################################################################################
 ######################################################################################################
@@ -23,6 +19,8 @@ from transformers import (
 ###
 ###  https://gitlab.aicrowd.com/aicrowd/challenges/meta-comprehensive-rag-benchmark-kdd-cup-2024/meta-comphrehensive-rag-benchmark-starter-kit/-/blob/master/docs/download_baseline_model_weights.md
 ###
+### And please pay special attention to the comments that start with "TUNE THIS VARIABLE"
+###                        as they depend on your model and the available GPU resources.
 ###
 ### DISCLAIMER: This baseline has NOT been tuned for performance
 ###             or efficiency, and is provided as is for demonstration.
@@ -41,146 +39,350 @@ from transformers import (
 CRAG_MOCK_API_URL = os.getenv("CRAG_MOCK_API_URL", "http://localhost:8000")
 
 
-class RAGModel:
-    def __init__(self):
+#### CONFIG PARAMETERS ---
+
+# Define the number of context sentences to consider for generating an answer.
+NUM_CONTEXT_SENTENCES = 20
+# Set the maximum length for each context sentence (in characters).
+MAX_CONTEXT_SENTENCE_LENGTH = 1000
+# Set the maximum context references length (in characters).
+MAX_CONTEXT_REFERENCES_LENGTH = 4000
+
+# Batch size you wish the evaluators will use to call the `batch_generate_answer` function
+AICROWD_SUBMISSION_BATCH_SIZE = 8 # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
+
+# VLLM Parameters 
+VLLM_TENSOR_PARALLEL_SIZE = 4 # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
+VLLM_GPU_MEMORY_UTILIZATION = 0.85 # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
+
+# Sentence Transformer Parameters
+SENTENTENCE_TRANSFORMER_BATCH_SIZE = 128 # TUNE THIS VARIABLE depending on the size of your embedding model and GPU mem available
+
+#### CONFIG PARAMETERS END---
+
+class ChunkExtractor:
+
+    @ray.remote
+    def _extract_chunks(self, interaction_id, html_source):
         """
-        Initialize the RAGModel with necessary models and configurations.
+        Extracts and returns chunks from given HTML source.
 
-        This constructor sets up the environment by loading sentence transformers for embedding generation,
-        a large language model for generating responses, and tokenizer for text processing. It also initializes
-        model parameters and templates for generating answers.
-        """
-        # Load a sentence transformer model optimized for sentence embeddings, using CUDA if available.
-        self.sentence_model = SentenceTransformer(
-            "models/sentence-transformers/all-MiniLM-L6-v2", device="cuda"
-        )
-
-        # Define the number of context sentences to consider for generating an answer.
-        self.num_context = 10
-        # Set the maximum length for each context sentence in characters.
-        self.max_ctx_sentence_length = 1000
-
-        # Template for formatting the input to the language model, including placeholders for the question and references.
-        self.prompt_template = """
-        ### Question
-        {query}
-
-        ### References 
-        {references}
-
-        ### Answer
-        """
-
-        # Configuration for model quantization to improve performance, using 4-bit precision.
-        bnb_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_compute_dtype=torch.float16,
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_use_double_quant=False,
-        )
-
-        # Specify the large language model to be used.
-        model_name = "models/meta-llama/Llama-2-7b-chat-hf"
-
-        # Load the tokenizer for the specified model.
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-        # Load the large language model with the specified quantization configuration.
-        self.llm = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            device_map="auto",
-            quantization_config=bnb_config,
-            torch_dtype=torch.float16,
-        )
-
-        # Initialize a text generation pipeline with the loaded model and tokenizer.
-        self.generation_pipe = pipeline(
-            task="text-generation",
-            model=self.llm,
-            tokenizer=self.tokenizer,
-            max_new_tokens=10,
-        )
-
-    def generate_answer(
-        self, query: str, search_results: List[Dict], query_time: str
-    ) -> str:
-        """
-        Generate an answer based on the provided query and a list of pre-cached search results.
+        Note: This function is for demonstration purposes only.
+        We are treating an independent sentence as a chunk here,
+        but you could choose to chunk your text more cleverly than this.
 
         Parameters:
-        - query (str): The user's question.
-        - search_results (List[Dict]): A list containing the search result objects,
-        as described here:
-          https://gitlab.aicrowd.com/aicrowd/challenges/meta-comprehensive-rag-benchmark-kdd-cup-2024/meta-comphrehensive-rag-benchmark-starter-kit/-/blob/master/docs/dataset.md#search-results-detail
-        - query_time (str): The time at which the query was made, represented as a string.
+            interaction_id (str): Interaction ID that this HTML source belongs to.
+            html_source (str): HTML content from which to extract text.
 
         Returns:
-        - str: A text response that answers the query. Limited to 75 tokens.
-
-        This method processes the search results to extract relevant sentences, generates embeddings for them,
-        and selects the top context sentences based on cosine similarity to the query embedding. It then formats
-        this information into a prompt for the language model, which generates an answer that is then trimmed to
-        meet the token limit.
+            Tuple[str, List[str]]: A tuple containing the interaction ID and a list of sentences extracted from the HTML content.
         """
+        # Parse the HTML content using BeautifulSoup
+        soup = BeautifulSoup(html_source, "lxml")
+        text = soup.get_text(" ", strip=True)  # Use space as a separator, strip whitespaces
 
-        # Initialize a list to hold all extracted sentences from the search results.
-        all_sentences = []
+        if not text:
+            # Return a list with empty string when no text is extracted
+            return interaction_id, [""]
 
-        # Process each HTML text from the search results to extract text content.
-        for html_text in search_results:
-            # Parse the HTML content to extract text.
-            soup = BeautifulSoup(html_text["page_result"], features="lxml")
-            text = soup.get_text().replace("\n", "")
-            if len(text) > 0:
-                # Convert the text into sentences and extract their offsets.
-                offsets = text_to_sentences_and_offsets(text)[1]
-                for ofs in offsets:
-                    # Extract each sentence based on its offset and limit its length.
-                    sentence = text[ofs[0] : ofs[1]]
-                    all_sentences.append(
-                        sentence[: self.max_ctx_sentence_length]
-                    )
-            else:
-                # If no text is extracted, add an empty string as a placeholder.
-                all_sentences.append("")
+        # Extract offsets of sentences from the text
+        _, offsets = text_to_sentences_and_offsets(text)
 
-        # Generate embeddings for all sentences and the query.
-        all_embeddings = self.sentence_model.encode(
-            all_sentences, normalize_embeddings=True
-        )
-        query_embedding = self.sentence_model.encode(
-            query, normalize_embeddings=True
-        )[None, :]
+        # Initialize a list to store sentences
+        chunks = []
 
-        # Calculate cosine similarity between query and sentence embeddings, and select the top sentences.
-        cosine_scores = (all_embeddings * query_embedding).sum(1)
-        top_sentences = np.array(all_sentences)[
-            (-cosine_scores).argsort()[: self.num_context]
+        # Iterate through the list of offsets and extract sentences
+        for start, end in offsets:
+            # Extract the sentence and limit its length
+            sentence = text[start:end][:MAX_CONTEXT_SENTENCE_LENGTH]
+            chunks.append(sentence)
+
+        return interaction_id, chunks
+
+    def extract_chunks(self, batch_interaction_ids, batch_search_results):
+        """
+        Extracts chunks from given batch search results using parallel processing with Ray.
+
+        Parameters:
+            batch_interaction_ids (List[str]): List of interaction IDs.
+            batch_search_results (List[List[Dict]]): List of search results batches, each containing HTML text.
+
+        Returns:
+            Tuple[np.ndarray, np.ndarray]: A tuple containing an array of chunks and an array of corresponding interaction IDs.
+        """
+        # Setup parallel chunk extraction using ray remote
+        ray_response_refs = [
+            self._extract_chunks.remote(
+                self,
+                interaction_id=batch_interaction_ids[idx],
+                html_source=html_text["page_result"]
+            )
+            for idx, search_results in enumerate(batch_search_results)
+            for html_text in search_results
         ]
 
-        # Format the top sentences as references in the model's prompt template.
-        references = ""
-        for snippet in top_sentences:
-            references += "<DOC>\n" + snippet + "\n</DOC>\n"
-        references = " ".join(
-            references.split()[:500]
-        )  # Limit the length of references to fit the model's input size.
-        final_prompt = self.prompt_template.format(
-            query=query, references=references
+        # Wait until all sentence extractions are complete
+        # and collect chunks for every interaction_id separately
+        chunk_dictionary = defaultdict(list)
+
+        for response_ref in ray_response_refs:
+            interaction_id, _chunks = ray.get(response_ref)  # Blocking call until parallel execution is complete
+            chunk_dictionary[interaction_id].extend(_chunks)
+
+        # Flatten chunks and keep a map of corresponding interaction_ids
+        chunks, chunk_interaction_ids = self._flatten_chunks(chunk_dictionary)
+
+        return chunks, chunk_interaction_ids
+
+    def _flatten_chunks(self, chunk_dictionary):
+        """
+        Flattens the chunk dictionary into separate lists for chunks and their corresponding interaction IDs.
+
+        Parameters:
+            chunk_dictionary (defaultdict): Dictionary with interaction IDs as keys and lists of chunks as values.
+
+        Returns:
+            Tuple[np.ndarray, np.ndarray]: A tuple containing an array of chunks and an array of corresponding interaction IDs.
+        """
+        chunks = []
+        chunk_interaction_ids = []
+
+        for interaction_id, _chunks in chunk_dictionary.items():
+            # De-duplicate chunks within the scope of an interaction ID
+            unique_chunks = list(set(_chunks))
+            chunks.extend(unique_chunks)
+            chunk_interaction_ids.extend([interaction_id] * len(unique_chunks))
+
+        # Convert to numpy arrays for convenient slicing/masking operations later
+        chunks = np.array(chunks)
+        chunk_interaction_ids = np.array(chunk_interaction_ids)
+
+        return chunks, chunk_interaction_ids
+
+class RAGModel:
+    """
+    An example RAGModel for the KDDCup 2024 Meta CRAG Challenge
+    which includes all the key components of a RAG lifecycle.
+    """
+    def __init__(self):
+        self.initialize_models()
+        self.chunk_extractor = ChunkExtractor()
+
+    def initialize_models(self):
+        # Initialize Meta Llama 3 - 8B Instruct Model
+        self.model_name = "models/meta-llama/Meta-Llama-3-8B-Instruct"
+
+        if not os.path.exists(self.model_name):
+            raise Exception(
+                f"""
+            The evaluators expect the model weights to be checked into the repository,
+            but we could not find the model weights at {self.model_name}
+            
+            Please follow the instructions in the docs below to download and check in the model weights.
+            
+            https://gitlab.aicrowd.com/aicrowd/challenges/meta-comprehensive-rag-benchmark-kdd-cup-2024/meta-comphrehensive-rag-benchmark-starter-kit/-/blob/master/docs/dataset.md
+            """
+            )
+
+        # Initialize the model with vllm
+        self.llm = vllm.LLM(
+            self.model_name,
+            tensor_parallel_size=VLLM_TENSOR_PARALLEL_SIZE, 
+            gpu_memory_utilization=VLLM_GPU_MEMORY_UTILIZATION, 
+            trust_remote_code=True,
+            dtype="half", # note: bfloat16 is not supported on nvidia-T4 GPUs
+            enforce_eager=True
+        )
+        self.tokenizer = self.llm.get_tokenizer()
+
+        # Load a sentence transformer model optimized for sentence embeddings, using CUDA if available.
+        self.sentence_model = SentenceTransformer(
+            "models/sentence-transformers/all-MiniLM-L6-v2",
+            device=torch.device(
+                "cuda" if torch.cuda.is_available() else "cpu"
+            ),
         )
 
-        # Generate an answer using the formatted prompt.
-        result = self.generation_pipe(final_prompt)
-        result = result[0]["generated_text"]
+    def calculate_embeddings(self, sentences):
+        """
+        Compute normalized embeddings for a list of sentences using a sentence encoding model.
 
-        try:
-            # Extract the answer from the generated text.
-            answer = result.split("### Answer\n")[-1]
-        except IndexError:
-            # If the model fails to generate an answer, return a default response.
-            answer = "I don't know"
+        This function leverages multiprocessing to encode the sentences, which can enhance the
+        processing speed on multi-core machines.
 
-        # Trim the prediction to a maximum of 75 tokens to meet the submission requirements.
-        trimmed_answer = trim_predictions_to_max_token_length(answer)
+        Args:
+            sentences (List[str]): A list of sentences for which embeddings are to be computed.
 
-        return trimmed_answer
+        Returns:
+            np.ndarray: An array of normalized embeddings for the given sentences.
+
+        """
+        embeddings = self.sentence_model.encode(
+            sentences=sentences,
+            normalize_embeddings=True,
+            batch_size=SENTENTENCE_TRANSFORMER_BATCH_SIZE,
+        )
+        # Note: There is an opportunity to parallelize the embedding generation across 4 GPUs
+        #       but sentence_model.encode_multi_process seems to interefere with Ray
+        #       on the evaluation servers. 
+        #       todo: this can also be done in a Ray native approach.
+        #       
+        return embeddings
+
+    def get_batch_size(self) -> int:
+        """
+        Determines the batch size that is used by the evaluator when calling the `batch_generate_answer` function.
+        
+        The evaluation timeouts linearly scale with the batch size. 
+            i.e.: time out for the `batch_generate_answer` call = batch_size * per_sample_timeout 
+        
+
+        Returns:
+            int: The batch size, an integer between 1 and 16. It can be dynamic
+                 across different batch_generate_answer calls, or stay a static value.
+        """
+        self.batch_size = AICROWD_SUBMISSION_BATCH_SIZE  
+        return self.batch_size
+
+    def batch_generate_answer(self, batch: Dict[str, Any]) -> List[str]:
+        """
+        Generates answers for a batch of queries using associated (pre-cached) search results and query times.
+
+        Parameters:
+            batch (Dict[str, Any]): A dictionary containing a batch of input queries with the following keys:
+                - 'interaction_id;  (List[str]): List of interaction_ids for the associated queries
+                - 'query' (List[str]): List of user queries.
+                - 'search_results' (List[List[Dict]]): List of search result lists, each corresponding
+                                                      to a query. Please refer to the following link for
+                                                      more details about the individual search objects:
+                                                      https://gitlab.aicrowd.com/aicrowd/challenges/meta-comprehensive-rag-benchmark-kdd-cup-2024/meta-comphrehensive-rag-benchmark-starter-kit/-/blob/master/docs/dataset.md#search-results-detail
+                - 'query_time' (List[str]): List of timestamps (represented as a string), each corresponding to when a query was made.
+
+        Returns:
+            List[str]: A list of plain text responses for each query in the batch. Each response is limited to 75 tokens.
+            If the generated response exceeds 75 tokens, it will be truncated to fit within this limit.
+
+        Notes:
+        - If the correct answer is uncertain, it's preferable to respond with "I don't know" to avoid
+          the penalty for hallucination.
+        - Response Time: Ensure that your model processes and responds to each query within 30 seconds.
+          Failing to adhere to this time constraint **will** result in a timeout during evaluation.
+        """
+        batch_interaction_ids = batch["interaction_id"]
+        queries = batch["query"]
+        batch_search_results = batch["search_results"]
+        query_times = batch["query_time"]
+
+        # Chunk all search results using ChunkExtractor
+        chunks, chunk_interaction_ids = self.chunk_extractor.extract_chunks(
+            batch_interaction_ids, batch_search_results
+        )
+
+        # Calculate all chunk embeddings
+        chunk_embeddings = self.calculate_embeddings(chunks)
+
+        # Calculate embeddings for queries
+        query_embeddings = self.calculate_embeddings(queries)
+
+        # Retrieve top matches for the whole batch
+        batch_retrieval_results = []
+        for _idx, interaction_id in enumerate(batch_interaction_ids):
+            query = queries[_idx]
+            query_time = query_times[_idx]
+            query_embedding = query_embeddings[_idx]
+
+            # Identify chunks that belong to this interaction_id
+            relevant_chunks_mask = chunk_interaction_ids == interaction_id
+
+            # Filter out the said chunks and corresponding embeddings
+            relevant_chunks = chunks[relevant_chunks_mask]
+            relevant_chunks_embeddings = chunk_embeddings[relevant_chunks_mask]
+
+            # Calculate cosine similarity between query and chunk embeddings,
+            cosine_scores = (relevant_chunks_embeddings * query_embedding).sum(1)
+
+            # and retrieve top-N results.
+            retrieval_results = relevant_chunks[
+                (-cosine_scores).argsort()[:NUM_CONTEXT_SENTENCES]
+            ]
+            
+            # You might also choose to skip the steps above and 
+            # use a vectorDB directly.
+            batch_retrieval_results.append(retrieval_results)
+            
+        # Prepare formatted prompts from the LLM        
+        formatted_prompts = self.format_prompts(queries, query_times, batch_retrieval_results)
+
+        # Generate responses via vllm
+        responses = self.llm.generate(
+            formatted_prompts,
+            vllm.SamplingParams(
+                n=1,  # Number of output sequences to return for each prompt.
+                top_p=0.9,  # Float that controls the cumulative probability of the top tokens to consider.
+                temperature=0.1,  # Randomness of the sampling
+                skip_special_tokens=True,  # Whether to skip special tokens in the output.
+                max_tokens=50,  # Maximum number of tokens to generate per output sequence.
+                
+                # Note: We are using 50 max new tokens instead of 75,
+                # because the 75 max token limit for the competition is checked using the Llama2 tokenizer.
+                # Llama3 instead uses a different tokenizer with a larger vocabulary
+                # This allows the Llama3 tokenizer to represent the same content more efficiently, 
+                # while using fewer tokens.
+            ),
+            use_tqdm=False # you might consider setting this to True during local development
+        )
+
+        # Aggregate answers into List[str]
+        answers = []
+        for response in responses:
+            answers.append(response.outputs[0].text)
+        
+        return answers
+
+    def format_prompts(self, queries, query_times, batch_retrieval_results=[]):
+        """
+        Formats queries, corresponding query_times and retrieval results using the chat_template of the model.
+            
+        Parameters:
+        - queries (List[str]): A list of queries to be formatted into prompts.
+        - query_times (List[str]): A list of query_time strings corresponding to each query.
+        - batch_retrieval_results (List[str])
+        """        
+        system_prompt = "You are provided with a question and various references. Your task is to answer the question succinctly, using the fewest words possible. If the references do not contain the necessary information to answer the question, respond with 'I don't know'. There is no need to explain the reasoning behind your answers."
+        formatted_prompts = []
+
+        for _idx, query in enumerate(queries):
+            query_time = query_times[_idx]
+            retrieval_results = batch_retrieval_results[_idx]
+
+            user_message = ""
+            references = ""
+            
+            if len(retrieval_results) > 0:
+                references += "# References \n"
+                # Format the top sentences as references in the model's prompt template.
+                for _snippet_idx, snippet in enumerate(retrieval_results):
+                    references += f"- {snippet.strip()}\n"
+            
+            references = references[:MAX_CONTEXT_REFERENCES_LENGTH]
+            # Limit the length of references to fit the model's input size.
+
+            user_message += f"{references}\n------\n\n"
+            user_message 
+            user_message += f"Using only the references listed above, answer the following question: \n"
+            user_message += f"Current Time: {query_time}\n"
+            user_message += f"Question: {query}\n"
+            
+            formatted_prompts.append(
+                self.tokenizer.apply_chat_template(
+                    [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_message},
+                    ],
+                    tokenize=False,
+                    add_generation_prompt=True,
+                )
+            )
+
+        return formatted_prompts

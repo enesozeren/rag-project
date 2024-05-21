@@ -10,3 +10,4 @@ openai==1.13.3
 sentence_transformers
 torch
 transformers
+vllm>=0.4.2
