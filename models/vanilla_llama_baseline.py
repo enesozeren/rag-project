@@ -6,45 +6,9 @@ import torch
 import vllm
 from models.utils import trim_predictions_to_max_token_length
 
-######################################################################################################
-######################################################################################################
-###
-### IMPORTANT !!!
-### Before submitting, please follow the instructions in the docs below to download and check in :
-### the model weighs.
-###
-###  https://gitlab.aicrowd.com/aicrowd/challenges/meta-comprehensive-rag-benchmark-kdd-cup-2024/meta-comphrehensive-rag-benchmark-starter-kit/-/blob/master/docs/download_baseline_model_weights.md
-###
-### And please pay special attention to the comments that start with "TUNE THIS VARIABLE"
-###                        as they depend on your model and the available GPU resources.
-###
-### DISCLAIMER: This baseline has NOT been tuned for performance
-###             or efficiency, and is provided as is for demonstration.
-######################################################################################################
+# Import the hyperparameters
+from config.variables import ChatModelParams, RagSystemParams
 
-
-# Load the environment variable that specifies the URL of the MockAPI. This URL is essential
-# for accessing the correct API endpoint in Task 2 and Task 3. The value of this environment variable
-# may vary across different evaluation settings, emphasizing the importance of dynamically obtaining
-# the API URL to ensure accurate endpoint communication.
-
-# Please refer to https://gitlab.aicrowd.com/aicrowd/challenges/meta-comprehensive-rag-benchmark-kdd-cup-2024/crag-mock-api
-# for more information on the MockAPI.
-#
-# **Note**: This environment variable will not be available for Task 1 evaluations.
-CRAG_MOCK_API_URL = os.getenv("CRAG_MOCK_API_URL", "http://localhost:8000")
-
-
-#### CONFIG PARAMETERS ---
-
-# Batch size you wish the evaluators will use to call the `batch_generate_answer` function
-AICROWD_SUBMISSION_BATCH_SIZE = 8 # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
-
-# VLLM Parameters 
-VLLM_TENSOR_PARALLEL_SIZE = 4 # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
-VLLM_GPU_MEMORY_UTILIZATION = 0.85 # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
-
-#### CONFIG PARAMETERS END---
 
 class InstructModel:
     def __init__(self):
@@ -74,8 +38,8 @@ class InstructModel:
         # initialize the model with vllm
         self.llm = vllm.LLM(
             self.model_name,
-            tensor_parallel_size=VLLM_TENSOR_PARALLEL_SIZE, 
-            gpu_memory_utilization=VLLM_GPU_MEMORY_UTILIZATION, 
+            tensor_parallel_size=ChatModelParams.VLLM_TENSOR_PARALLEL_SIZE, 
+            gpu_memory_utilization=ChatModelParams.VLLM_GPU_MEMORY_UTILIZATION, 
             trust_remote_code=True,
             dtype="half", # note: bfloat16 is not supported on nvidia-T4 GPUs
             enforce_eager=True
@@ -91,7 +55,7 @@ class InstructModel:
                  queries should be processed together in a single batch. It can be dynamic
                  across different batch_generate_answer calls, or stay a static value.
         """
-        self.batch_size = AICROWD_SUBMISSION_BATCH_SIZE  
+        self.batch_size = RagSystemParams.AICROWD_SUBMISSION_BATCH_SIZE  
         return self.batch_size
 
     def batch_generate_answer(self, batch: Dict[str, Any]) -> List[str]:
@@ -129,17 +93,13 @@ class InstructModel:
         responses = self.llm.generate(
             formatted_prompts,
             vllm.SamplingParams(
-                n=1,  # Number of output sequences to return for each prompt.
-                top_p=0.9,  # Float that controls the cumulative probability of the top tokens to consider.
-                temperature=0.1,  # randomness of the sampling
-                skip_special_tokens=True,  # Whether to skip special tokens in the output.
-                max_tokens=50,  # Maximum number of tokens to generate per output sequence.
-                # Note: We are using 50 max new tokens instead of 75,
-                # because the 75 max token limit is checked using the Llama2 tokenizer.
-                # The Llama3 model instead uses a differet tokenizer with a larger vocabulary
-                # This allows it to represent the same content more efficiently, using fewer tokens.
+                n=ChatModelParams.N_OUT_SEQ,
+                top_p=ChatModelParams.TOP_P,
+                temperature=ChatModelParams.TEMPERATURE,
+                skip_special_tokens=ChatModelParams.SKIP_SPECIAL_TOKENS,
+                max_tokens=ChatModelParams.MAX_TOKENS
             ),
-            use_tqdm = False
+            use_tqdm=False # you might consider setting this to True during local development
         )
 
         # Aggregate answers into List[str]

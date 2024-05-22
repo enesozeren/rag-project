@@ -1,7 +1,4 @@
-#!/usr/bin/env python
-
 import os
-
 from transformers import LlamaTokenizerFast
 
 tokenizer_path = os.path.join(os.path.dirname(__file__), "..", "tokenizer")
