@@ -24,25 +24,6 @@ def get_system_message():
     return INSTRUCTIONS + IN_CONTEXT_EXAMPLES
 
 
-def attempt_api_call(client, model_name, messages, max_retries=10):
-    """Attempt an API call with retries upon encountering specific errors."""
-    # todo: add default response when all efforts fail
-    for attempt in range(max_retries):
-        try:
-            response = client.chat.completions.create(
-                model=model_name,
-                messages=messages,
-                response_format={"type": "json_object"},
-            )
-            return response.choices[0].message.content
-        except (APIConnectionError, RateLimitError):
-            logger.warning(f"API call failed on attempt {attempt + 1}, retrying...")
-        except Exception as e:
-            logger.error(f"Unexpected error: {e}")
-            break
-    return None
-
-
 def log_response(messages, response, output_directory="api_responses"):
     """Save the response from the API to a file."""
     os.makedirs(output_directory, exist_ok=True)
@@ -124,7 +105,6 @@ def load_data_in_batches(dataset_path, batch_size):
         raise e
 
 
-
 def generate_predictions(dataset_path, participant_model):
     """
     Processes batches of data from a dataset to generate predictions using a model.
@@ -150,7 +130,7 @@ def generate_predictions(dataset_path, participant_model):
     return queries, ground_truths, predictions
 
 
-def evaluate_predictions(queries, ground_truths, predictions, evaluation_model_name, openai_client):
+def evaluate_predictions(queries, ground_truths, predictions, evaluation_model):
     n_miss, n_correct, n_correct_exact = 0, 0, 0
     system_message = get_system_message()
 
@@ -167,12 +147,10 @@ def evaluate_predictions(queries, ground_truths, predictions, evaluation_model_n
         prediction_lowercase = prediction.lower()
         
         messages = [
-            {"role": "system", "content": system_message},
-            {
-                "role": "user",
-                "content": f"Question: {query}\n Ground truth: {ground_truth}\n Prediction: {prediction}\n",
-            },
+            {"role": "user", 
+             "content": system_message + f"\nQuestion: {query}\n Ground truth: {ground_truth}\n Prediction: {prediction}\n",}
         ]
+
         if "i don't know" in prediction_lowercase:
             n_miss += 1
             continue
@@ -181,7 +159,7 @@ def evaluate_predictions(queries, ground_truths, predictions, evaluation_model_n
             n_correct += 1
             continue
 
-        response = attempt_api_call(openai_client, evaluation_model_name, messages)
+        response = evaluation_model.respond(messages)
         if response:
             log_response(messages, response)
             eval_res = parse_response(response)
@@ -206,16 +184,18 @@ def evaluate_predictions(queries, ground_truths, predictions, evaluation_model_n
 
 if __name__ == "__main__":
     from models.user_config import UserModel
+    from models.evaluation_model import EvaluationModel
 
     DATASET_PATH = "example_data/dev_data.jsonl.bz2"
-    EVALUATION_MODEL_NAME = os.getenv("EVALUATION_MODEL_NAME", "gpt-4-0125-preview")
 
     # Generate predictions
     participant_model = UserModel()
     queries, ground_truths, predictions = generate_predictions(DATASET_PATH, participant_model)
+
+    # Initialize evaluation model
+    evaluation_model = EvaluationModel()
     
     # Evaluate Predictions
-    openai_client = OpenAI()
     evaluation_results = evaluate_predictions(
-        queries, ground_truths, predictions, EVALUATION_MODEL_NAME, openai_client
+        queries, ground_truths, predictions, evaluation_model
     )
