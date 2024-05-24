@@ -1,6 +1,7 @@
 from typing import Any, Dict, List
 from models.utils import trim_predictions_to_max_token_length
 
+
 class DummyModel:
     def __init__(self):
         """

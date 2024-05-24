@@ -4,7 +4,8 @@
 # UserModel = DummyModel
 
 # Uncomment the lines below to use the Vanilla LLAMA baseline
-from models.vanilla_llama_baseline import InstructModel 
+from models.vanilla_llama_baseline import InstructModel
+
 UserModel = InstructModel
 
 

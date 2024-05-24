@@ -38,11 +38,11 @@ class InstructModel:
         # initialize the model with vllm
         self.llm = vllm.LLM(
             self.model_name,
-            tensor_parallel_size=ChatModelParams.VLLM_TENSOR_PARALLEL_SIZE, 
-            gpu_memory_utilization=ChatModelParams.VLLM_GPU_MEMORY_UTILIZATION, 
+            tensor_parallel_size=ChatModelParams.VLLM_TENSOR_PARALLEL_SIZE,
+            gpu_memory_utilization=ChatModelParams.VLLM_GPU_MEMORY_UTILIZATION,
             trust_remote_code=True,
-            dtype="half", # note: bfloat16 is not supported on nvidia-T4 GPUs
-            enforce_eager=True
+            dtype="half",  # note: bfloat16 is not supported on nvidia-T4 GPUs
+            enforce_eager=True,
         )
         self.tokenizer = self.llm.get_tokenizer()
 
@@ -55,7 +55,7 @@ class InstructModel:
                  queries should be processed together in a single batch. It can be dynamic
                  across different batch_generate_answer calls, or stay a static value.
         """
-        self.batch_size = RagSystemParams.AICROWD_SUBMISSION_BATCH_SIZE  
+        self.batch_size = RagSystemParams.AICROWD_SUBMISSION_BATCH_SIZE
         return self.batch_size
 
     def batch_generate_answer(self, batch: Dict[str, Any]) -> List[str]:
@@ -97,9 +97,9 @@ class InstructModel:
                 top_p=ChatModelParams.TOP_P,
                 temperature=ChatModelParams.TEMPERATURE,
                 skip_special_tokens=ChatModelParams.SKIP_SPECIAL_TOKENS,
-                max_tokens=ChatModelParams.MAX_TOKENS
+                max_tokens=ChatModelParams.MAX_TOKENS,
             ),
-            use_tqdm=False # you might consider setting this to True during local development
+            use_tqdm=False,  # you might consider setting this to True during local development
         )
 
         # Aggregate answers into List[str]
@@ -112,11 +112,11 @@ class InstructModel:
     def format_prommpts(self, queries, query_times):
         """
         Formats queries and corresponding query_times using the chat_template of the model.
-            
+
         Parameters:
         - queries (list of str): A list of queries to be formatted into prompts.
         - query_times (list of str): A list of query_time strings corresponding to each query.
-            
+
         """
         system_prompt = "You are provided with a question and various references. Your task is to answer the question succinctly, using the fewest words possible. If the references do not contain the necessary information to answer the question, respond with 'I don't know'."
         formatted_prompts = []

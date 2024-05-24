@@ -87,17 +87,24 @@ def load_data_in_batches(dataset_path, batch_size):
     """
     Generator function that reads data from a compressed file and yields batches of data.
     Each batch is a dictionary containing lists of interaction_ids, queries, search results, query times, and answers.
-    
+
     Args:
     dataset_path (str): Path to the dataset file.
     batch_size (int): Number of data items in each batch.
-    
+
     Yields:
     dict: A batch of data.
     """
+
     def initialize_batch():
-        """ Helper function to create an empty batch. """
-        return {"interaction_id": [], "query": [], "search_results": [], "query_time": [], "answer": []}
+        """Helper function to create an empty batch."""
+        return {
+            "interaction_id": [],
+            "query": [],
+            "search_results": [],
+            "query_time": [],
+            "answer": [],
+        }
 
     try:
         with bz2.open(dataset_path, "rt") as file:
@@ -107,7 +114,7 @@ def load_data_in_batches(dataset_path, batch_size):
                     item = json.loads(line)
                     for key in batch:
                         batch[key].append(item[key])
-                    
+
                     if len(batch["query"]) == batch_size:
                         yield batch
                         batch = initialize_batch()
@@ -124,48 +131,53 @@ def load_data_in_batches(dataset_path, batch_size):
         raise e
 
 
-
 def generate_predictions(dataset_path, participant_model):
     """
     Processes batches of data from a dataset to generate predictions using a model.
-    
+
     Args:
     dataset_path (str): Path to the dataset.
     participant_model (object): UserModel that provides `get_batch_size()` and `batch_generate_answer()` interfaces.
-    
+
     Returns:
     tuple: A tuple containing lists of queries, ground truths, and predictions.
     """
     queries, ground_truths, predictions = [], [], []
     batch_size = participant_model.get_batch_size()
 
-    for batch in tqdm(load_data_in_batches(dataset_path, batch_size), desc="Generating predictions"):
-        batch_ground_truths = batch.pop("answer")  # Remove answers from batch and store them
+    for batch in tqdm(
+        load_data_in_batches(dataset_path, batch_size), desc="Generating predictions"
+    ):
+        batch_ground_truths = batch.pop(
+            "answer"
+        )  # Remove answers from batch and store them
         batch_predictions = participant_model.batch_generate_answer(batch)
-        
+
         queries.extend(batch["query"])
         ground_truths.extend(batch_ground_truths)
         predictions.extend(batch_predictions)
-    
+
     return queries, ground_truths, predictions
 
 
-def evaluate_predictions(queries, ground_truths, predictions, evaluation_model_name, openai_client):
+def evaluate_predictions(
+    queries, ground_truths, predictions, evaluation_model_name, openai_client
+):
     n_miss, n_correct, n_correct_exact = 0, 0, 0
     system_message = get_system_message()
 
-    for _idx, prediction in enumerate(tqdm(
-        predictions, total=len(predictions), desc="Evaluating Predictions"
-    )):
+    for _idx, prediction in enumerate(
+        tqdm(predictions, total=len(predictions), desc="Evaluating Predictions")
+    ):
         query = queries[_idx]
         ground_truth = ground_truths[_idx].strip()
         # trim prediction to 75 tokens using Llama2 tokenizer
         prediction = trim_predictions_to_max_token_length(prediction)
         prediction = prediction.strip()
-        
+
         ground_truth_lowercase = ground_truth.lower()
         prediction_lowercase = prediction.lower()
-        
+
         messages = [
             {"role": "system", "content": system_message},
             {
@@ -212,8 +224,10 @@ if __name__ == "__main__":
 
     # Generate predictions
     participant_model = UserModel()
-    queries, ground_truths, predictions = generate_predictions(DATASET_PATH, participant_model)
-    
+    queries, ground_truths, predictions = generate_predictions(
+        DATASET_PATH, participant_model
+    )
+
     # Evaluate Predictions
     openai_client = OpenAI()
     evaluation_results = evaluate_predictions(
