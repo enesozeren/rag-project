@@ -1,13 +1,11 @@
 import os
 from typing import Any, Dict, List
 
-import numpy as np
-import torch
 import vllm
-from models.utils import trim_predictions_to_max_token_length
 
 # Import the hyperparameters
 from config.variables import ChatModelParams, RagSystemParams
+from models.utils import trim_predictions_to_max_token_length
 
 
 class InstructModel:

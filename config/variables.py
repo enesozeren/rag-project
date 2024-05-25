@@ -2,8 +2,8 @@ import os
 
 
 class ChatModelParams:
-    VLLM_TENSOR_PARALLEL_SIZE: 4  # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
-    VLLM_GPU_MEMORY_UTILIZATION: 0.85  # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
+    VLLM_TENSOR_PARALLEL_SIZE = 4  # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
+    VLLM_GPU_MEMORY_UTILIZATION = 0.85  # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
 
     N_OUT_SEQ = (1,)  # Number of output sequences to return for each prompt.
     TOP_P = (
