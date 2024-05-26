@@ -3,5 +3,3 @@ example_data/web.json filter=lfs diff=lfs merge=lfs -text
 example_data/dev_data.jsonl.bz2 filter=lfs diff=lfs merge=lfs -text
 models/meta-llama/* filter=lfs diff=lfs merge=lfs -text
 models/sentence-transformers/* filter=lfs diff=lfs merge=lfs -text
-/models/meta-llama/Llama-2-7b-chat-hf/model-00001-of-00002.safetensor filter=lfs diff=lfs merge=lfs -text
-/models/meta-llama/Llama-2-7b-chat-hf/model-00002-of-00002.safetensors filter=lfs diff=lfs merge=lfs -text

@@ -36,7 +36,7 @@ But the steps should work equally well for any other models on hugging face.
 
 #### Model Downloads:
 
-1. **Download LLaMA-2-7b Model**:
+1. **Download LLaMA-3-8B-Instruct Model**:
 
    Execute the following command to download the `Meta-Llama-3-8B-Instruct` model to a local subdirectory. This command excludes unnecessary files to save space:
 
