@@ -5,13 +5,11 @@ class ChatModelParams:
     VLLM_TENSOR_PARALLEL_SIZE = 4  # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
     VLLM_GPU_MEMORY_UTILIZATION = 0.85  # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
 
-    N_OUT_SEQ = (1,)  # Number of output sequences to return for each prompt.
-    TOP_P = (
-        0.9,
-    )  # Float that controls the cumulative probability of the top tokens to consider.
-    TEMPERATURE = (0.1,)  # Randomness of the sampling
-    SKIP_SPECIAL_TOKENS = (True,)  # Whether to skip special tokens in the output.
-    MAX_TOKENS = (50,)  # Maximum number of tokens to generate per output sequence.
+    N_OUT_SEQ = 1  # Number of output sequences to return for each prompt.
+    TOP_P = 0.9  # Float that controls the cumulative probability of the top tokens to consider.
+    TEMPERATURE = 0.1  # Randomness of the sampling
+    SKIP_SPECIAL_TOKENS = True  # Whether to skip special tokens in the output.
+    MAX_TOKENS = 50  # Maximum number of tokens to generate per output sequence.
 
     # Note: We are using 50 max new tokens instead of 75,
     # because the 75 max token limit for the competition is checked using the Llama2 tokenizer.
