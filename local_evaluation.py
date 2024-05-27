@@ -4,7 +4,6 @@ import os
 from datetime import datetime
 
 from loguru import logger
-from openai import APIConnectionError, OpenAI, RateLimitError
 from prompts.templates import IN_CONTEXT_EXAMPLES, INSTRUCTIONS
 from tqdm.auto import tqdm
 from transformers import LlamaTokenizerFast
