@@ -1,12 +1,12 @@
 {
-    "challenge_id": "meta-kdd-cup-24-crag-retrieval-summarization",
-    "authors": [
-      "ercong_nie",
-      "enes_ozeren",
-      "julia_broden",
-      "dgloukhman"
-    ],
-    "gpu": true,
-    "gpu_count": 2,
-    "description": "our baseline agent"
+  "challenge_id": "meta-kdd-cup-24-crag-end-to-end-retrieval-augmented-generation",
+  "authors": [
+    "ercong_nie",
+    "enes_ozeren",
+    "julia_broden",
+    "dgloukhman"
+  ],
+  "gpu": true,
+  "gpu_count": 2,
+  "description": "our baseline agent"
 }
