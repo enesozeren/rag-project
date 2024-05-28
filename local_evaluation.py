@@ -4,10 +4,10 @@ import os
 from datetime import datetime
 
 from loguru import logger
-from openai import APIConnectionError, OpenAI, RateLimitError
-from prompts.templates import IN_CONTEXT_EXAMPLES, INSTRUCTIONS
 from tqdm.auto import tqdm
 from transformers import LlamaTokenizerFast
+
+from prompts.templates import IN_CONTEXT_EXAMPLES, INSTRUCTIONS
 
 tokenizer = LlamaTokenizerFast.from_pretrained("tokenizer")
 
@@ -22,25 +22,6 @@ def load_json_file(file_path):
 def get_system_message():
     """Returns the system message containing instructions and in context examples."""
     return INSTRUCTIONS + IN_CONTEXT_EXAMPLES
-
-
-def attempt_api_call(client, model_name, messages, max_retries=10):
-    """Attempt an API call with retries upon encountering specific errors."""
-    # todo: add default response when all efforts fail
-    for attempt in range(max_retries):
-        try:
-            response = client.chat.completions.create(
-                model=model_name,
-                messages=messages,
-                response_format={"type": "json_object"},
-            )
-            return response.choices[0].message.content
-        except (APIConnectionError, RateLimitError):
-            logger.warning(f"API call failed on attempt {attempt + 1}, retrying...")
-        except Exception as e:
-            logger.error(f"Unexpected error: {e}")
-            break
-    return None
 
 
 def log_response(messages, response, output_directory="api_responses"):
@@ -160,9 +141,7 @@ def generate_predictions(dataset_path, participant_model):
     return queries, ground_truths, predictions
 
 
-def evaluate_predictions(
-    queries, ground_truths, predictions, evaluation_model_name, openai_client
-):
+def evaluate_predictions(queries, ground_truths, predictions, evaluation_model):
     n_miss, n_correct, n_correct_exact = 0, 0, 0
     system_message = get_system_message()
 
@@ -179,12 +158,13 @@ def evaluate_predictions(
         prediction_lowercase = prediction.lower()
 
         messages = [
-            {"role": "system", "content": system_message},
             {
                 "role": "user",
-                "content": f"Question: {query}\n Ground truth: {ground_truth}\n Prediction: {prediction}\n",
-            },
+                "content": system_message
+                + f"\nQuestion: {query}\n Ground truth: {ground_truth}\n Prediction: {prediction}\n",
+            }
         ]
+
         if "i don't know" in prediction_lowercase:
             n_miss += 1
             continue
@@ -193,7 +173,7 @@ def evaluate_predictions(
             n_correct += 1
             continue
 
-        response = attempt_api_call(openai_client, evaluation_model_name, messages)
+        response = evaluation_model.respond(messages)
         if response:
             log_response(messages, response)
             eval_res = parse_response(response)
@@ -217,10 +197,10 @@ def evaluate_predictions(
 
 
 if __name__ == "__main__":
+    from models.evaluation_model import EvaluationModel
     from models.user_config import UserModel
 
     DATASET_PATH = "example_data/dev_data.jsonl.bz2"
-    EVALUATION_MODEL_NAME = os.getenv("EVALUATION_MODEL_NAME", "gpt-4-0125-preview")
 
     # Generate predictions
     participant_model = UserModel()
@@ -228,8 +208,10 @@ if __name__ == "__main__":
         DATASET_PATH, participant_model
     )
 
+    # Initialize evaluation model
+    evaluation_model = EvaluationModel()
+
     # Evaluate Predictions
-    openai_client = OpenAI()
     evaluation_results = evaluate_predictions(
-        queries, ground_truths, predictions, EVALUATION_MODEL_NAME, openai_client
+        queries, ground_truths, predictions, evaluation_model
     )

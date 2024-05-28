@@ -3,3 +3,4 @@ example_data/web.json filter=lfs diff=lfs merge=lfs -text
 example_data/dev_data.jsonl.bz2 filter=lfs diff=lfs merge=lfs -text
 models/meta-llama/* filter=lfs diff=lfs merge=lfs -text
 models/sentence-transformers/* filter=lfs diff=lfs merge=lfs -text
+models/google/* filter=lfs diff=lfs merge=lfs -text

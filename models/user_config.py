@@ -11,4 +11,5 @@
 
 # Uncomment the lines below to use the RAG LLAMA baseline
 from models.rag_llama_baseline import RAGModel
+
 UserModel = RAGModel
