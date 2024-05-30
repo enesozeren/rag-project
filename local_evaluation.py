@@ -35,11 +35,12 @@ if __name__ == "__main__":
     user_config_path = 'models/user_config.py'
     with open(user_config_path, 'r') as user_config_file:
         user_config_content = user_config_file.read()
-    logging.info('\n---USER CONFIG FILE---:\n%s', user_config_content)
+    logging.info('\n---MODELS/USER_CONFIG.PY FILE---:\n%s', user_config_content)
 
     # Load the configuration and log it
     config = load_config(config_path)
-    logging.info('\n---CONFIG---:\n%s', yaml.dump(config, default_flow_style=False, sort_keys=False))
+    logging.info('\n---CONFIG PATH---:\n%s', config_path)
+    logging.info('\n---CONFIGS---:\n%s', yaml.dump(config, default_flow_style=False, sort_keys=False))
 
     # Generate predictions
     participant_model = UserModel(config_path=config_path)

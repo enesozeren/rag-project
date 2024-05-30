@@ -1,5 +1,5 @@
 INFO:root:
----USER CONFIG FILE---:
+---MODELS/USER_CONFIG.PY FILE---:
 from models.dummy_model import DummyModel
 # isort: skip_file
 
@@ -17,10 +17,13 @@ UserModel = DummyModel
 # UserModel = RAGModel
 
 INFO:root:
----CONFIG---:
+---CONFIG PATH---:
+config/experiment1_config.yaml
+INFO:root:
+---CONFIGS---:
 ChatModelParams:
   MODEL_PATH: models/meta-llama/Meta-Llama-3-8B-Instruct
-  VLLM_TENSOR_PARALLEL_SIZE: 111
+  VLLM_TENSOR_PARALLEL_SIZE: 8
   VLLM_GPU_MEMORY_UTILIZATION: 0.85
   N_OUT_SEQ: 1
   TOP_P: 0.9
@@ -40,12 +43,12 @@ EvaluationModelParams:
 
 INFO:root:
 ---EVALUATION RESULTS---:
-score: -1.0
+score: 0.0
 exact_accuracy: 0.0
 accuracy: 0.0
-hallucination: 1.0
-missing: 0.0
-n_miss: 0
+hallucination: 0.0
+missing: 1.0
+n_miss: 10
 n_correct: 0
 n_correct_exact: 0
 total: 10

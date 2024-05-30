@@ -1,5 +1,5 @@
 INFO:root:
----USER CONFIG FILE---:
+---MODELS/USER_CONFIG.PY FILE---:
 from models.dummy_model import DummyModel
 # isort: skip_file
 
@@ -17,7 +17,10 @@ UserModel = DummyModel
 # UserModel = RAGModel
 
 INFO:root:
----CONFIG---:
+---CONFIG PATH---:
+config/default_config.yaml
+INFO:root:
+---CONFIGS---:
 ChatModelParams:
   MODEL_PATH: models/meta-llama/Meta-Llama-3-8B-Instruct
   VLLM_TENSOR_PARALLEL_SIZE: 4
