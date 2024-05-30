@@ -1,25 +1,23 @@
 import os
 from typing import Any, Dict, List
-
 import vllm
-
-# Import the hyperparameters
-from config.variables import ChatModelParams, RagSystemParams
-from models.utils import trim_predictions_to_max_token_length
+from models.utils import load_config
 
 
 class InstructModel:
-    def __init__(self):
+    def __init__(self, config_path="config/default_config.yaml"):
         """
         Initialize your model(s) here if necessary.
         This is the constructor for your DummyModel class, where you can set up any
         required initialization steps for your model(s) to function correctly.
         """
+        # Load configuration
+        self.CONFIG = load_config(config_path)        
         self.initialize_models()
 
     def initialize_models(self):
-        # Initialize Meta Llama 3 - 8B Instruct Model
-        self.model_name = "models/meta-llama/Meta-Llama-3-8B-Instruct"
+        # Initialize the Chat Mode
+        self.model_name = self.CONFIG['ChatModelParams']['MODEL_PATH']
 
         if not os.path.exists(self.model_name):
             raise Exception(
@@ -36,8 +34,8 @@ class InstructModel:
         # initialize the model with vllm
         self.llm = vllm.LLM(
             self.model_name,
-            tensor_parallel_size=ChatModelParams.VLLM_TENSOR_PARALLEL_SIZE,
-            gpu_memory_utilization=ChatModelParams.VLLM_GPU_MEMORY_UTILIZATION,
+            tensor_parallel_size=self.CONFIG['ChatModelParams']['VLLM_TENSOR_PARALLEL_SIZE'],
+            gpu_memory_utilization=self.CONFIG['ChatModelParams']['VLLM_GPU_MEMORY_UTILIZATION'],
             trust_remote_code=True,
             dtype="half",  # note: bfloat16 is not supported on nvidia-T4 GPUs
             enforce_eager=True,
@@ -53,7 +51,7 @@ class InstructModel:
                  queries should be processed together in a single batch. It can be dynamic
                  across different batch_generate_answer calls, or stay a static value.
         """
-        self.batch_size = RagSystemParams.AICROWD_SUBMISSION_BATCH_SIZE
+        self.batch_size = self.CONFIG['RagSystemParams']['AICROWD_SUBMISSION_BATCH_SIZE']
         return self.batch_size
 
     def batch_generate_answer(self, batch: Dict[str, Any]) -> List[str]:
@@ -91,11 +89,11 @@ class InstructModel:
         responses = self.llm.generate(
             formatted_prompts,
             vllm.SamplingParams(
-                n=ChatModelParams.N_OUT_SEQ,
-                top_p=ChatModelParams.TOP_P,
-                temperature=ChatModelParams.TEMPERATURE,
-                skip_special_tokens=ChatModelParams.SKIP_SPECIAL_TOKENS,
-                max_tokens=ChatModelParams.MAX_TOKENS,
+                n=self.CONFIG['ChatModelParams']['N_OUT_SEQ'],
+                top_p=self.CONFIG['ChatModelParams']['TOP_P'],
+                temperature=self.CONFIG['ChatModelParams']['TEMPERATURE'],
+                skip_special_tokens=self.CONFIG['ChatModelParams']['SKIP_SPECIAL_TOKENS'],
+                max_tokens=self.CONFIG['ChatModelParams']['MAX_TOKENS'],
             ),
             use_tqdm=False,  # you might consider setting this to True during local development
         )

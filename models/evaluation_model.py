@@ -4,13 +4,16 @@ from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
 )
+from models.utils import load_config
 
 
 class EvaluationModel:
-    def __init__(self):
-        '''Initializes evaluation model'''
-    
-        model_name = "models/google/gemma-2b-it"
+    def __init__(self, config_path="config/default_config.yaml"):
+        # Load configuration
+        self.CONFIG = load_config(config_path)
+        
+        # Initialize the Evaluation Model
+        model_name = self.CONFIG['EvaluationModelParams']['MODEL_PATH']
 
         if not os.path.exists(model_name):
             raise Exception(

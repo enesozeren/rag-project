@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import os
+import yaml
 from transformers import LlamaTokenizerFast
 
 tokenizer_path = os.path.join(os.path.dirname(__file__), "..", "tokenizer")
 tokenizer = LlamaTokenizerFast.from_pretrained(tokenizer_path)
-
 
 def trim_predictions_to_max_token_length(prediction):
     """Trims prediction output to 75 tokens"""
@@ -13,3 +13,9 @@ def trim_predictions_to_max_token_length(prediction):
     trimmed_tokenized_prediction = tokenized_prediction[1 : max_token_length + 1]
     trimmed_prediction = tokenizer.decode(trimmed_tokenized_prediction)
     return trimmed_prediction
+
+def load_config(config_path: str):
+    '''Load configuration from a yaml file.'''
+    with open(config_path, 'r') as file:
+        config = yaml.safe_load(file)
+    return config
