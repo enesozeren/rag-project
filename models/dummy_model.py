@@ -3,7 +3,7 @@ from models.utils import trim_predictions_to_max_token_length
 
 
 class DummyModel:
-    def __init__(self):
+    def __init__(self, config_path="config/default_config.yaml"):
         """
         Initialize your model(s) here if necessary.
         This is the constructor for your DummyModel class, where you can set up any

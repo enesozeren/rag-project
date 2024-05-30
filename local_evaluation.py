@@ -42,13 +42,13 @@ if __name__ == "__main__":
     logging.info('\n---CONFIG---:\n%s', yaml.dump(config, default_flow_style=False, sort_keys=False))
 
     # Generate predictions
-    participant_model = UserModel()
+    participant_model = UserModel(config_path=config_path)
     queries, ground_truths, predictions = evaluation_utils.generate_predictions(
         DATASET_PATH, participant_model
     )
 
     # Initialize evaluation model
-    evaluation_model = EvaluationModel()
+    evaluation_model = EvaluationModel(config_path=config_path)
 
     # Evaluate Predictions
     evaluation_results = evaluation_utils.evaluate_predictions(
