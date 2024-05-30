@@ -200,7 +200,7 @@ if __name__ == "__main__":
     from models.evaluation_model import EvaluationModel
     from models.user_config import UserModel
 
-    DATASET_PATH = "example_data/dev_data.jsonl.bz2"
+    DATASET_PATH = "example_data/crag_task_1_dev_v3_release.jsonl.bz2"
 
     # Generate predictions
     participant_model = UserModel()
