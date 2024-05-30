@@ -3,11 +3,14 @@ import numpy as np
 from collections import defaultdict
 from bs4 import BeautifulSoup
 from blingfire import text_to_sentences_and_offsets
-
-from config.variables import RagSystemParams
+from models.utils import load_config
 
 
 class ChunkExtractor:
+    def __init__(self, config_path="config/default_config.yaml"):
+        # Load configuration
+        self.CONFIG = load_config(config_path)
+
     @ray.remote
     def _extract_chunks(self, interaction_id, html_source):
         """
@@ -43,7 +46,7 @@ class ChunkExtractor:
         # Iterate through the list of offsets and extract sentences
         for start, end in offsets:
             # Extract the sentence and limit its length
-            sentence = text[start:end][: RagSystemParams.MAX_CONTEXT_SENTENCE_LENGTH]
+            sentence = text[start:end][: self.CONFIG['RagSystemParams']['MAX_CONTEXT_SENTENCE_LENGTH']]
             chunks.append(sentence)
 
         return interaction_id, chunks
