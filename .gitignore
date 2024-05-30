@@ -2,3 +2,5 @@
 __pycache__
 api_responses/*.json
 .DS_Store
+example_data/*
+
