@@ -32,7 +32,9 @@ if __name__ == "__main__":
     )
 
     # The test dataset path
-    DATASET_PATH = "example_data/crag_task_1_dev_v3_release.jsonl.bz2"
+    DATASET_PATH = "example_data/subsampled_crag_task_1_dev_v3_release.jsonl.bz2"
+    # Log the dataset path
+    logging.info('\n---DATASET PATH---:\n%s', DATASET_PATH)
 
     # Log the model/user_config.py content
     user_config_path = "models/user_config.py"
