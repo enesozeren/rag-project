@@ -30,4 +30,4 @@ RagSystemParams:
   AICROWD_SUBMISSION_BATCH_SIZE: 8  # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
 
 EvaluationModelParams:
-  MODEL_PATH: "models/google/gemma-2b-it" # The model that will be used as EvaluationModel
+  MODEL_PATH: "models/meta-llama/Meta-Llama-3-8B-Instruct" # The model that will be used as EvaluationModel

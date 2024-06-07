@@ -28,6 +28,9 @@ def subsample_data(input_path, output_path, sample_size):
         print(f"Error: An error occurred while reading the file {input_path}: {e}")
         return
 
+    # set a seed 
+    random.seed(42)
+    
     # Subsample the data
     if sample_size < len(data):
         subsampled_data = random.sample(data, sample_size)
