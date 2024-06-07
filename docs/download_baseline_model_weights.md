@@ -60,17 +60,6 @@ But the steps should work equally well for any other models on hugging face.
        --exclude *.bin *.h5 *.ot # These are alternates to the safetensors hence not needed
    ```
 
-4. **Download Gemma 2B IT Model (for evaluation)**:
-
-   Similarly, download the `google/gemma-2b-it` model using the following command:
-
-   ```bash
-   HF_HUB_ENABLE_HF_TRANSFER=1 huggingface-cli download \
-      google/gemma-2b-it \
-       --local-dir-use-symlinks False \
-       --local-dir models/google/gemma-2b-it \
-       --exclude *.gguf # These are alternates to the safetensors hence not needed
-   ```
 
 #### Version Control with Git LFS:
 
