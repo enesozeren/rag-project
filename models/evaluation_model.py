@@ -41,7 +41,13 @@ class EvaluationModel:
         inputs = self.tokenizer.encode(query, return_tensors='pt').to(self.device)
         
         # Generate prediction from model
-        outputs = self.llm.generate(inputs, max_new_tokens=8)
+        outputs = self.llm.generate(
+            inputs,
+            max_new_tokens=8,
+            pad_token_id=self.tokenizer.eos_token_id,  # Set pad token ID
+            attention_mask=inputs.new_ones(inputs.shape)  # Set attention mask
+        )
+
         output_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         
         # Find the index where generated text starts
@@ -54,6 +60,7 @@ class EvaluationModel:
         if accuracy_json_match:
             accuracy_json = accuracy_json_match.group(1)
         else:
-            raise ValueError("JSON data not found in the generated text.")
+            print("---EVAL MODEL: No JSON found in the generated text---")
+            accuracy_json = "{'Accuracy': 'False'}"
         
         return accuracy_json
