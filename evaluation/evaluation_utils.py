@@ -157,13 +157,8 @@ def evaluate_predictions(queries, ground_truths, predictions, evaluation_model):
         ground_truth_lowercase = ground_truth.lower()
         prediction_lowercase = prediction.lower()
 
-        messages = [
-            {
-                "role": "user",
-                "content": system_message
-                + f"\nQuestion: {query}\n Ground truth: {ground_truth}\n Prediction: {prediction}\n",
-            }
-        ]
+        prompt_for_eval_model = f"""System:\n{INSTRUCTIONS}\nExamples:\n{IN_CONTEXT_EXAMPLES}"""
+        prompt_for_eval_model += f"\nUser:\nQuestion: {query}\nGround truth: {ground_truth}\nPrediction: {prediction}\nAsistant:"
 
         if "i don't know" in prediction_lowercase:
             n_miss += 1
@@ -173,9 +168,9 @@ def evaluate_predictions(queries, ground_truths, predictions, evaluation_model):
             n_correct += 1
             continue
 
-        response = evaluation_model.respond(messages)
+        response = evaluation_model.respond(prompt_for_eval_model)
         if response:
-            log_response(messages, response)
+            log_response(prompt_for_eval_model, response)
             eval_res = parse_response(response)
             if eval_res == 1:
                 n_correct += 1
