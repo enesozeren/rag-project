@@ -21,12 +21,12 @@ UserModel = RAGModel
 
 INFO:root:
 ---CONFIG PATH---:
-config/llama_70b_local_eval_config.yaml
+config/stella_base_config.yaml
 INFO:root:
 ---CONFIGS---:
 ChatModelParams:
   MODEL_PATH: models/meta-llama/Meta-Llama-3-8B-Instruct
-  VLLM_TENSOR_PARALLEL_SIZE: 2
+  VLLM_TENSOR_PARALLEL_SIZE: 1
   VLLM_GPU_MEMORY_UTILIZATION: 0.5
   N_OUT_SEQ: 1
   TOP_P: 0.9
@@ -34,7 +34,7 @@ ChatModelParams:
   SKIP_SPECIAL_TOKENS: true
   MAX_TOKENS: 50
 EmbeddingModelParams:
-  MODEL_PATH: models/sentence-transformers/all-MiniLM-L6-v2
+  MODEL_PATH: models/sentence-transformers/stella-base-en-v2
   SENTENTENCE_TRANSFORMER_BATCH_SIZE: 128
 RagSystemParams:
   NUM_CONTEXT_SENTENCES: 20
@@ -44,5 +44,17 @@ RagSystemParams:
 EvaluationModelParams:
   MODEL_PATH: models/meta-llama/Meta-Llama-3-70B-Instruct
 
-INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransformer: models/sentence-transformers/all-MiniLM-L6-v2
-WARNING:root:Some parameters are on the meta device device because they were offloaded to the cpu.
+INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransformer: models/sentence-transformers/stella-base-en-v2
+WARNING:sentence_transformers.SentenceTransformer:No sentence-transformers model found with name models/sentence-transformers/stella-base-en-v2. Creating a new one with mean pooling.
+INFO:root:
+---EVALUATION RESULTS---:
+score: 0.05705705705705699
+exact_accuracy: 0.036036036036036036
+accuracy: 0.3003003003003003
+hallucination: 0.24324324324324326
+missing: 0.45645645645645644
+n_miss: 152
+n_correct: 100
+n_correct_exact: 12
+total: 333
+

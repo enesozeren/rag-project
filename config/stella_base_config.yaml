@@ -16,7 +16,7 @@ ChatModelParams:
   # while using fewer tokens.
 
 EmbeddingModelParams:
-  MODEL_PATH: "models/sentence-transformers/all-MiniLM-L6-v2" # The model that will be used as EmbeddingModel
+  MODEL_PATH: "models/sentence-transformers/stella-base-en-v2" # The model that will be used as EmbeddingModel
   SENTENTENCE_TRANSFORMER_BATCH_SIZE: 128  # TUNE THIS VARIABLE depending on the size of your embedding model and GPU mem available
 
 RagSystemParams:

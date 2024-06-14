@@ -1,0 +1,59 @@
+INFO:root:
+---DATASET PATH---:
+example_data/subsampled_crag_task_1_dev_v3_release.jsonl.bz2
+INFO:root:
+---MODELS/USER_CONFIG.PY FILE---:
+# from models.dummy_model import DummyModel
+# isort: skip_file
+
+# UserModel = DummyModel
+
+# Uncomment the lines below to use the Vanilla LLAMA baseline
+# from models.vanilla_llama_baseline import InstructModel
+
+# UserModel = InstructModel
+
+
+# Uncomment the lines below to use the RAG LLAMA baseline
+from models.rag_llama_baseline import RAGModel
+
+UserModel = RAGModel
+
+INFO:root:
+---CONFIG PATH---:
+config/gte_large_config.yaml
+INFO:root:
+---CONFIGS---:
+ChatModelParams:
+  MODEL_PATH: models/meta-llama/Meta-Llama-3-8B-Instruct
+  VLLM_TENSOR_PARALLEL_SIZE: 1
+  VLLM_GPU_MEMORY_UTILIZATION: 0.5
+  N_OUT_SEQ: 1
+  TOP_P: 0.9
+  TEMPERATURE: 0.1
+  SKIP_SPECIAL_TOKENS: true
+  MAX_TOKENS: 50
+EmbeddingModelParams:
+  MODEL_PATH: models/sentence-transformers/gte-large-en-v1.5
+  SENTENTENCE_TRANSFORMER_BATCH_SIZE: 128
+RagSystemParams:
+  NUM_CONTEXT_SENTENCES: 20
+  MAX_CONTEXT_SENTENCE_LENGTH: 1000
+  MAX_CONTEXT_REFERENCES_LENGTH: 4000
+  AICROWD_SUBMISSION_BATCH_SIZE: 8
+EvaluationModelParams:
+  MODEL_PATH: models/meta-llama/Meta-Llama-3-70B-Instruct
+
+INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransformer: models/sentence-transformers/gte-large-en-v1.5
+INFO:root:
+---EVALUATION RESULTS---:
+score: 0.033033033033033066
+exact_accuracy: 0.036036036036036036
+accuracy: 0.27927927927927926
+hallucination: 0.24624624624624625
+missing: 0.4744744744744745
+n_miss: 158
+n_correct: 93
+n_correct_exact: 12
+total: 333
+

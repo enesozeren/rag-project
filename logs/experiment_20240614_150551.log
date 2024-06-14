@@ -21,12 +21,12 @@ UserModel = RAGModel
 
 INFO:root:
 ---CONFIG PATH---:
-config/llama_70b_local_eval_config.yaml
+config/snowflake_arctic_config.yaml
 INFO:root:
 ---CONFIGS---:
 ChatModelParams:
   MODEL_PATH: models/meta-llama/Meta-Llama-3-8B-Instruct
-  VLLM_TENSOR_PARALLEL_SIZE: 2
+  VLLM_TENSOR_PARALLEL_SIZE: 1
   VLLM_GPU_MEMORY_UTILIZATION: 0.5
   N_OUT_SEQ: 1
   TOP_P: 0.9
@@ -34,7 +34,7 @@ ChatModelParams:
   SKIP_SPECIAL_TOKENS: true
   MAX_TOKENS: 50
 EmbeddingModelParams:
-  MODEL_PATH: models/sentence-transformers/all-MiniLM-L6-v2
+  MODEL_PATH: models/sentence-transformers/snowflake-arctic-embed-s
   SENTENTENCE_TRANSFORMER_BATCH_SIZE: 128
 RagSystemParams:
   NUM_CONTEXT_SENTENCES: 20
@@ -43,4 +43,18 @@ RagSystemParams:
   AICROWD_SUBMISSION_BATCH_SIZE: 8
 EvaluationModelParams:
   MODEL_PATH: models/meta-llama/Meta-Llama-3-70B-Instruct
+
+INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransformer: models/sentence-transformers/snowflake-arctic-embed-s
+INFO:sentence_transformers.SentenceTransformer:1 prompts are loaded, with the keys: ['query']
+INFO:root:
+---EVALUATION RESULTS---:
+score: 0.012012012012011963
+exact_accuracy: 0.03003003003003003
+accuracy: 0.24024024024024024
+hallucination: 0.22822822822822822
+missing: 0.5315315315315315
+n_miss: 177
+n_correct: 80
+n_correct_exact: 10
+total: 333
 

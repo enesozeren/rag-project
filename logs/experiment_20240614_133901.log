@@ -1,9 +1,12 @@
 INFO:root:
+---DATASET PATH---:
+example_data/subsampled_crag_task_1_dev_v3_release.jsonl.bz2
+INFO:root:
 ---MODELS/USER_CONFIG.PY FILE---:
-from models.dummy_model import DummyModel
+# from models.dummy_model import DummyModel
 # isort: skip_file
 
-UserModel = DummyModel
+# UserModel = DummyModel
 
 # Uncomment the lines below to use the Vanilla LLAMA baseline
 # from models.vanilla_llama_baseline import InstructModel
@@ -12,19 +15,19 @@ UserModel = DummyModel
 
 
 # Uncomment the lines below to use the RAG LLAMA baseline
-# from models.rag_llama_baseline import RAGModel
+from models.rag_llama_baseline import RAGModel
 
-# UserModel = RAGModel
+UserModel = RAGModel
 
 INFO:root:
 ---CONFIG PATH---:
-config/experiment1_config.yaml
+config/llama_70b_local_eval_config.yaml
 INFO:root:
 ---CONFIGS---:
 ChatModelParams:
   MODEL_PATH: models/meta-llama/Meta-Llama-3-8B-Instruct
-  VLLM_TENSOR_PARALLEL_SIZE: 8
-  VLLM_GPU_MEMORY_UTILIZATION: 0.85
+  VLLM_TENSOR_PARALLEL_SIZE: 1
+  VLLM_GPU_MEMORY_UTILIZATION: 0.5
   N_OUT_SEQ: 1
   TOP_P: 0.9
   TEMPERATURE: 0.1
@@ -39,17 +42,18 @@ RagSystemParams:
   MAX_CONTEXT_REFERENCES_LENGTH: 4000
   AICROWD_SUBMISSION_BATCH_SIZE: 8
 EvaluationModelParams:
-  MODEL_PATH: models/google/gemma-2b-it
+  MODEL_PATH: models/meta-llama/Meta-Llama-3-70B-Instruct
 
+INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransformer: models/sentence-transformers/all-MiniLM-L6-v2
 INFO:root:
 ---EVALUATION RESULTS---:
-score: 0.0
-exact_accuracy: 0.0
-accuracy: 0.0
-hallucination: 0.0
-missing: 1.0
-n_miss: 10
-n_correct: 0
-n_correct_exact: 0
-total: 10
+score: 0.04504504504504503
+exact_accuracy: 0.03003003003003003
+accuracy: 0.2972972972972973
+hallucination: 0.25225225225225223
+missing: 0.45045045045045046
+n_miss: 150
+n_correct: 99
+n_correct_exact: 10
+total: 333
 
