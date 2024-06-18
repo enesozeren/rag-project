@@ -36,3 +36,4 @@ models/meta-llama/Meta-Llama-3-70B-Instruct/model-00020-of-00030.safetensors fil
 models/meta-llama/Meta-Llama-3-70B-Instruct/model-00023-of-00030.safetensors filter=lfs diff=lfs merge=lfs -text
 models/meta-llama/Meta-Llama-3-70B-Instruct/model-00025-of-00030.safetensors filter=lfs diff=lfs merge=lfs -text
 models/meta-llama/Meta-Llama-3-70B-Instruct/model-00027-of-00030.safetensors filter=lfs diff=lfs merge=lfs -text
+models/sentence-transformers/gtr-t5-xl/ filter=lfs diff=lfs merge=lfs -text

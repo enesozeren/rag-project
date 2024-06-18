@@ -1,7 +1,7 @@
 ChatModelParams:
-  MODEL_PATH: "models/meta-llama/Meta-Llama-3-70B-Instruct" # The model that will be used as ChatModel
-  VLLM_TENSOR_PARALLEL_SIZE: 4  # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
-  VLLM_GPU_MEMORY_UTILIZATION: 0.5  # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
+  MODEL_PATH: "models/meta-llama/Meta-Llama-3-8B-Instruct" # The model that will be used as ChatModel
+  VLLM_TENSOR_PARALLEL_SIZE: 1  # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
+  VLLM_GPU_MEMORY_UTILIZATION: 0.50  # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
 
   N_OUT_SEQ: 1  # Number of output sequences to return for each prompt.
   TOP_P: 0.9  # Float that controls the cumulative probability of the top tokens to consider.
@@ -16,7 +16,7 @@ ChatModelParams:
   # while using fewer tokens.
 
 EmbeddingModelParams:
-  MODEL_PATH: "models/sentence-transformers/gtr-t5-xl" # The model that will be used as EmbeddingModel
+  MODEL_PATH: "models/sentence-transformers/stella-base-en-v2" # The model that will be used as EmbeddingModel
   SENTENTENCE_TRANSFORMER_BATCH_SIZE: 128  # TUNE THIS VARIABLE depending on the size of your embedding model and GPU mem available
 
 RagSystemParams:

@@ -51,6 +51,7 @@ class RAGModel:
         self.sentence_model = SentenceTransformer(
             self.CONFIG['EmbeddingModelParams']['MODEL_PATH'],
             device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+            trust_remote_code=True
         )
 
     def calculate_embeddings(self, sentences):

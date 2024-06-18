@@ -2,7 +2,13 @@ import bz2
 import json
 import random
 
-def subsample_data(input_path, output_path, sample_size):
+SAMPLE_SIZE = 512  # Adjust the sample size as needed
+SEED = 42  # Set the seed for reproducibility
+# File paths
+INPUT_FILE_PATH = 'example_data/crag_task_1_dev_v3_release.jsonl.bz2'
+OUTPUT_FILE_PATH = f"example_data/subsampled_SIZE{SAMPLE_SIZE}_SEED{SEED}_crag_task_1_dev_v3_release.jsonl.bz2"
+
+def subsample_data(input_path, output_path, sample_size, seed=42):
     """
     Subsample data from a .jsonl.bz2 file and write the subsample to another .jsonl.bz2 file.
 
@@ -11,6 +17,10 @@ def subsample_data(input_path, output_path, sample_size):
     - output_path (str): Path to the output .jsonl.bz2 file.
     - sample_size (int): Number of samples to retain.
     """
+
+    # set a seed 
+    random.seed(seed)
+
     # Read the entire dataset
     data = []
     try:
@@ -27,9 +37,6 @@ def subsample_data(input_path, output_path, sample_size):
     except IOError as e:
         print(f"Error: An error occurred while reading the file {input_path}: {e}")
         return
-
-    # set a seed 
-    random.seed(42)
     
     # Subsample the data
     if sample_size < len(data):
@@ -45,9 +52,9 @@ def subsample_data(input_path, output_path, sample_size):
     except IOError as e:
         print(f"Error: An error occurred while writing to the file {output_path}: {e}")
 
-# Example usage
-sample_size = 333  # Adjust the sample size as needed
-# File paths
-input_file_path = 'example_data/crag_task_1_dev_v3_release.jsonl.bz2'
-output_file_path = "example_data/subsampled_crag_task_1_dev_v3_release.jsonl.bz2"
-subsample_data(input_file_path, output_file_path, sample_size)
+
+if __name__ == "__main__":
+
+    subsample_data(input_path=INPUT_FILE_PATH, 
+                   output_path=OUTPUT_FILE_PATH, 
+                   sample_size=SAMPLE_SIZE, seed=SEED)
