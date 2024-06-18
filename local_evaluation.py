@@ -25,25 +25,32 @@ if __name__ == "__main__":
     args = parser.parse_args()
     config_path = args.config
 
-    # Create a log file
-    current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-    logging.basicConfig(
-        filename=f"logs/experiment_{current_time}.log", level=logging.INFO
-    )
+    start_time = datetime.now()
+    start_time_str = start_time.strftime("%Y%m%d_%H%M%S")
 
     # The test dataset path
     DATASET_PATH = "example_data/subsampled_crag_task_1_dev_v3_release.jsonl.bz2"
     # Log the dataset path
-    logging.info('\n---DATASET PATH---:\n%s', DATASET_PATH)
 
     # Log the model/user_config.py content
     user_config_path = "models/user_config.py"
     with open(user_config_path, "r") as user_config_file:
         user_config_content = user_config_file.read()
-    logging.info("\n---MODELS/USER_CONFIG.PY FILE---:\n%s", user_config_content)
 
     # Load the configuration and log it
     config = load_config(config_path)
+
+    # modelname
+    model_name = config["EmbeddingModelParams"]["MODEL_PATH"]
+    model_name = model_name[model_name.rfind("/") + 1 :]
+
+    # Create a log file
+    logging.basicConfig(
+        filename=f"logs/ex_{model_name}_{start_time_str}.log", level=logging.INFO
+    )
+
+    logging.info("\n---DATASET PATH---:\n%s", DATASET_PATH)
+    logging.info("\n---MODELS/USER_CONFIG.PY FILE---:\n%s", user_config_content)
     logging.info("\n---CONFIG PATH---:\n%s", config_path)
     logging.info(
         "\n---CONFIGS---:\n%s",
@@ -64,8 +71,13 @@ if __name__ == "__main__":
         queries, ground_truths, predictions, evaluation_model
     )
 
+    duration = datetime.now() - start_time
+
     # Log the evaluation results
     logging.info(
         "\n---EVALUATION RESULTS---:\n%s",
         yaml.dump(evaluation_results, default_flow_style=False, sort_keys=False),
+    )
+    logging.info(
+        "\n ---EXPERIMENT DURATION-----\n%s", yaml.dump({"duration": str(duration)})
     )

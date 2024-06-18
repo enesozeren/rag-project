@@ -1,7 +1,7 @@
 ### Setting Up and Downloading Baseline Model weighta with Hugging Face
 
 This guide outlines the steps to download (and check in) the models weights required for the baseline models.
-We will focus on the `Meta-Llama-3-8B-Instruct` and `all-MiniLM-L6-v2` models.
+We will focus on the `Meta-Llama-3-70B-Instruct` and `all-MiniLM-L6-v2` models.
 But the steps should work equally well for any other models on hugging face. 
 
 #### Preliminary Steps:
@@ -36,15 +36,15 @@ But the steps should work equally well for any other models on hugging face.
 
 #### Model Downloads:
 
-1. **Download LLaMA-3-8B-Instruct Model**:
+1. **Download LLaMA-3-70B-Instruct Model**:
 
-   Execute the following command to download the `Meta-Llama-3-8B-Instruct` model to a local subdirectory. This command excludes unnecessary files to save space:
+   Execute the following command to download the `Meta-Llama-3-70B-Instruct` model to a local subdirectory. This command excludes unnecessary files to save space:
 
    ```bash
    HF_HUB_ENABLE_HF_TRANSFER=1 huggingface-cli download \
-       meta-llama/Meta-Llama-3-8B-Instruct \
+       meta-llama/Meta-Llama-3-70B-Instruct \
        --local-dir-use-symlinks False \
-       --local-dir models/meta-llama/Meta-Llama-3-8B-Instruct \
+       --local-dir models/meta-llama/Meta-Llama-3-70B-Instruct \
        --exclude *.pth # These are alternates to the safetensors hence not needed
    ```
 
