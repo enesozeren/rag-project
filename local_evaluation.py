@@ -5,6 +5,7 @@ from datetime import datetime
 import yaml
 
 from evaluation import evaluation_utils
+from evaluation.evaluation_utils import time_logs, timer
 from models.evaluation_model import EvaluationModel
 from models.user_config import UserModel
 from models.utils import load_config
@@ -79,5 +80,6 @@ if __name__ == "__main__":
         yaml.dump(evaluation_results, default_flow_style=False, sort_keys=False),
     )
     logging.info(
-        "\n ---EXPERIMENT DURATION-----\n%s", yaml.dump({"duration": str(duration)})
+        "\n ---EXPERIMENT DURATION-----\n%s", yaml.dump({"overall_duration": duration})
     )
+    logging.info(yaml.dump({key: str(value) for key, value in time_logs.items()}))

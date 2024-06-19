@@ -1,4 +1,5 @@
 import bz2
+import functools
 import json
 import os
 from datetime import datetime
@@ -10,6 +11,30 @@ from transformers import LlamaTokenizerFast
 from prompts.templates import IN_CONTEXT_EXAMPLES, INSTRUCTIONS
 
 tokenizer = LlamaTokenizerFast.from_pretrained("tokenizer")
+time_logs = {}
+
+
+def timer(log_name):
+    """
+    A decorator for timing functions
+    """
+
+    def decorator_repeat(func):
+        @functools.wraps(func)
+        def wrapper_repeat(*args, **kwargs):
+            start_time = datetime.now()
+            value = func(*args, **kwargs)
+            end_time = datetime.now()
+            runtime = end_time - start_time
+            if log_name in time_logs.keys():
+                time_logs[log_name].append(runtime)
+            else:
+                time_logs[log_name] = [runtime]
+            return value
+
+        return wrapper_repeat
+
+    return decorator_repeat
 
 
 def load_json_file(file_path):
@@ -64,6 +89,7 @@ def trim_predictions_to_max_token_length(prediction):
     return trimmed_prediction
 
 
+@timer("load_data")
 def load_data_in_batches(dataset_path, batch_size):
     """
     Generator function that reads data from a compressed file and yields batches of data.
@@ -112,6 +138,7 @@ def load_data_in_batches(dataset_path, batch_size):
         raise e
 
 
+@timer("generate_prediction")
 def generate_predictions(dataset_path, participant_model):
     """
     Processes batches of data from a dataset to generate predictions using a model.
@@ -141,6 +168,7 @@ def generate_predictions(dataset_path, participant_model):
     return queries, ground_truths, predictions
 
 
+@timer("evaluate_predictions")
 def evaluate_predictions(queries, ground_truths, predictions, evaluation_model):
     n_miss, n_correct, n_correct_exact = 0, 0, 0
     system_message = get_system_message()
@@ -157,7 +185,9 @@ def evaluate_predictions(queries, ground_truths, predictions, evaluation_model):
         ground_truth_lowercase = ground_truth.lower()
         prediction_lowercase = prediction.lower()
 
-        prompt_for_eval_model = f"""System:\n{INSTRUCTIONS}\nExamples:\n{IN_CONTEXT_EXAMPLES}"""
+        prompt_for_eval_model = (
+            f"""System:\n{INSTRUCTIONS}\nExamples:\n{IN_CONTEXT_EXAMPLES}"""
+        )
         prompt_for_eval_model += f"\nUser:\nQuestion: {query}\nGround truth: {ground_truth}\nPrediction: {prediction}\nAsistant:"
 
         if "i don't know" in prediction_lowercase:
