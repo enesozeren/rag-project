@@ -1,8 +1,11 @@
 import os
 from typing import Any, Dict, List
+
 import torch
 import vllm
 from sentence_transformers import SentenceTransformer
+
+from evaluation.evaluation_utils import timer
 from models.chunk_extractor import ChunkExtractor
 from models.utils import load_config
 
@@ -21,7 +24,7 @@ class RAGModel:
 
     def initialize_models(self):
         # Initialize the Chat Model
-        self.model_name = self.CONFIG['ChatModelParams']['MODEL_PATH']
+        self.model_name = self.CONFIG["ChatModelParams"]["MODEL_PATH"]
 
         if not os.path.exists(self.model_name):
             raise Exception(
@@ -38,8 +41,12 @@ class RAGModel:
         # Initialize the model with vllm
         self.llm = vllm.LLM(
             self.model_name,
-            tensor_parallel_size=self.CONFIG['ChatModelParams']['VLLM_TENSOR_PARALLEL_SIZE'],
-            gpu_memory_utilization=self.CONFIG['ChatModelParams']['VLLM_GPU_MEMORY_UTILIZATION'],
+            tensor_parallel_size=self.CONFIG["ChatModelParams"][
+                "VLLM_TENSOR_PARALLEL_SIZE"
+            ],
+            gpu_memory_utilization=self.CONFIG["ChatModelParams"][
+                "VLLM_GPU_MEMORY_UTILIZATION"
+            ],
             trust_remote_code=True,
             dtype="half",  # note: bfloat16 is not supported on nvidia-T4 GPUs
             enforce_eager=True,
@@ -49,11 +56,12 @@ class RAGModel:
         # Initialize a sentence transformer model
         # Load a sentence transformer model optimized for sentence embeddings, using CUDA if available.
         self.sentence_model = SentenceTransformer(
-            self.CONFIG['EmbeddingModelParams']['MODEL_PATH'],
+            self.CONFIG["EmbeddingModelParams"]["MODEL_PATH"],
             device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
-            trust_remote_code=True
+            trust_remote_code=True,
         )
 
+    @timer("calculate_embeddings")
     def calculate_embeddings(self, sentences):
         """
         Compute normalized embeddings for a list of sentences using a sentence encoding model.
@@ -71,7 +79,9 @@ class RAGModel:
         embeddings = self.sentence_model.encode(
             sentences=sentences,
             normalize_embeddings=True,
-            batch_size=self.CONFIG['EmbeddingModelParams']['SENTENTENCE_TRANSFORMER_BATCH_SIZE'],
+            batch_size=self.CONFIG["EmbeddingModelParams"][
+                "SENTENTENCE_TRANSFORMER_BATCH_SIZE"
+            ],
         )
         # Note: There is an opportunity to parallelize the embedding generation across 4 GPUs
         #       but sentence_model.encode_multi_process seems to interefere with Ray
@@ -92,9 +102,12 @@ class RAGModel:
             int: The batch size, an integer between 1 and 16. It can be dynamic
                  across different batch_generate_answer calls, or stay a static value.
         """
-        self.batch_size = self.CONFIG['RagSystemParams']['AICROWD_SUBMISSION_BATCH_SIZE']
+        self.batch_size = self.CONFIG["RagSystemParams"][
+            "AICROWD_SUBMISSION_BATCH_SIZE"
+        ]
         return self.batch_size
 
+    @timer("batch_generate_answer")
     def batch_generate_answer(self, batch: Dict[str, Any]) -> List[str]:
         """
         Generates answers for a batch of queries using associated (pre-cached) search results and query times.
@@ -154,7 +167,9 @@ class RAGModel:
 
             # and retrieve top-N results.
             retrieval_results = relevant_chunks[
-                (-cosine_scores).argsort()[: self.CONFIG['RagSystemParams']['NUM_CONTEXT_SENTENCES']]
+                (-cosine_scores).argsort()[
+                    : self.CONFIG["RagSystemParams"]["NUM_CONTEXT_SENTENCES"]
+                ]
             ]
 
             # You might also choose to skip the steps above and
@@ -170,11 +185,13 @@ class RAGModel:
         responses = self.llm.generate(
             formatted_prompts,
             vllm.SamplingParams(
-                n=self.CONFIG['ChatModelParams']['N_OUT_SEQ'],
-                top_p=self.CONFIG['ChatModelParams']['TOP_P'],
-                temperature=self.CONFIG['ChatModelParams']['TEMPERATURE'],
-                skip_special_tokens=self.CONFIG['ChatModelParams']['SKIP_SPECIAL_TOKENS'],
-                max_tokens=self.CONFIG['ChatModelParams']['MAX_TOKENS'],
+                n=self.CONFIG["ChatModelParams"]["N_OUT_SEQ"],
+                top_p=self.CONFIG["ChatModelParams"]["TOP_P"],
+                temperature=self.CONFIG["ChatModelParams"]["TEMPERATURE"],
+                skip_special_tokens=self.CONFIG["ChatModelParams"][
+                    "SKIP_SPECIAL_TOKENS"
+                ],
+                max_tokens=self.CONFIG["ChatModelParams"]["MAX_TOKENS"],
             ),
             use_tqdm=False,  # you might consider setting this to True during local development
         )
@@ -211,7 +228,9 @@ class RAGModel:
                 for _snippet_idx, snippet in enumerate(retrieval_results):
                     references += f"- {snippet.strip()}\n"
 
-            references = references[: self.CONFIG['RagSystemParams']['MAX_CONTEXT_REFERENCES_LENGTH']]
+            references = references[
+                : self.CONFIG["RagSystemParams"]["MAX_CONTEXT_REFERENCES_LENGTH"]
+            ]
             # Limit the length of references to fit the model's input size.
 
             user_message += f"{references}\n------\n\n"
