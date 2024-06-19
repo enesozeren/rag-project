@@ -2,6 +2,7 @@ import bz2
 import functools
 import json
 import os
+import time
 from datetime import datetime
 
 from loguru import logger
@@ -22,9 +23,9 @@ def timer(log_name):
     def decorator_repeat(func):
         @functools.wraps(func)
         def wrapper_repeat(*args, **kwargs):
-            start_time = datetime.now()
+            start_time = time.perf_counter()
             value = func(*args, **kwargs)
-            end_time = datetime.now()
+            end_time = time.perf_counter()
             runtime = end_time - start_time
             if log_name in time_logs.keys():
                 time_logs[log_name].append(runtime)
@@ -89,7 +90,6 @@ def trim_predictions_to_max_token_length(prediction):
     return trimmed_prediction
 
 
-@timer("load_data")
 def load_data_in_batches(dataset_path, batch_size):
     """
     Generator function that reads data from a compressed file and yields batches of data.
