@@ -1,10 +1,12 @@
 import argparse
 import logging
+import time
 from datetime import datetime
 
 import yaml
 
 from evaluation import evaluation_utils
+from evaluation.evaluation_utils import time_logs, timer
 from models.evaluation_model import EvaluationModel
 from models.user_config import UserModel
 from models.utils import load_config
@@ -25,8 +27,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     config_path = args.config
 
-    start_time = datetime.now()
-    start_time_str = start_time.strftime("%Y%m%d_%H%M%S")
+    start_time = time.perf_counter()
 
     # The test dataset path
     DATASET_PATH = "example_data/subsampled_crag_task_1_dev_v3_release.jsonl.bz2"
@@ -44,9 +45,10 @@ if __name__ == "__main__":
     model_name = config["EmbeddingModelParams"]["MODEL_PATH"]
     model_name = model_name[model_name.rfind("/") + 1 :]
 
+    time_str = datetime.now().strftime("%Y%m%d_%H%M%S")
     # Create a log file
     logging.basicConfig(
-        filename=f"logs/ex_{model_name}_{start_time_str}.log", level=logging.INFO
+        filename=f"logs/ex_{model_name}_{time_str}.log", level=logging.INFO
     )
 
     logging.info("\n---DATASET PATH---:\n%s", DATASET_PATH)
@@ -71,13 +73,17 @@ if __name__ == "__main__":
         queries, ground_truths, predictions, evaluation_model
     )
 
-    duration = datetime.now() - start_time
+    duration = time.perf_counter() - start_time
 
     # Log the evaluation results
     logging.info(
         "\n---EVALUATION RESULTS---:\n%s",
         yaml.dump(evaluation_results, default_flow_style=False, sort_keys=False),
     )
-    logging.info(
-        "\n ---EXPERIMENT DURATION-----\n%s", yaml.dump({"duration": str(duration)})
-    )
+
+    time_logs["total_duration"] = [duration]
+    time_logs = {key: sum(value) / 60 for key, value in time_logs.items()}
+    time_logs = {
+        key: "{:.2f}".format(value) + " Min" for key, value in time_logs.items()
+    }
+    logging.info("\n ---EXPERIMENT DURATION---\n%s", yaml.dump(time_logs))
