@@ -1,62 +1,55 @@
 import os
 import torch
-from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
-)
 from models.utils import load_config
 import re
+import vllm
+
+MAX_TOKENS = 10
+TEMPERATURE = 0.0
 
 class EvaluationModel:
-    def __init__(self, config_path="config/default_config.yaml"):
+    def __init__(self, config_path, llm, tokenizer):
         # Load configuration
         self.CONFIG = load_config(config_path)
-        
-        # Initialize the Evaluation Model
-        model_name = self.CONFIG['EvaluationModelParams']['MODEL_PATH']
 
-        if not os.path.exists(model_name):
-            raise Exception(
-                f"""
-            The evaluators expect the model weights to be checked into the repository,
-            but we could not find the model weights at {model_name}
-
-            Please follow the instructions in the docs/download_baseline_model_weights document 
-            to download and check in the model weights.
-            """
+        # Load the model and tokenizer
+        # If the evaluation model is the same as the chat model, use the same model and tokenizer
+        if self.CONFIG["EvaluationModelParams"]["MODEL_PATH"] == self.CONFIG['ChatModelParams']['MODEL_PATH']:
+            self.llm = llm
+            self.tokenizer = tokenizer
+        # Otherwise, load the evaluation model and tokenizer
+        else:            
+            self.llm = vllm.LLM(
+                self.CONFIG["EvaluationModelParams"]["MODEL_PATH"],
+                tensor_parallel_size=2,
+                gpu_memory_utilization=0.9,
+                trust_remote_code=True,
+                dtype="half",  # note: bfloat16 is not supported on nvidia-T4 GPUs
+                enforce_eager=True,
             )
-
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-        self.llm = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            device_map="auto",
-            torch_dtype=torch.float16
-        )
-        # Get the device where the model is located
-        self.device = next(self.llm.parameters()).device        
+            self.tokenizer = self.llm.get_tokenizer()         
 
     def respond(self, query):
+
+        formatted_prompt = self.tokenizer.apply_chat_template(
+            [{"role": "user", "content": query}],
+            tokenize=False,
+            add_generation_prompt=True,
+        )
         
-        inputs = self.tokenizer.encode(query, return_tensors='pt').to(self.device)
-        
-        # Generate prediction from model
-        outputs = self.llm.generate(
-            inputs,
-            max_new_tokens=8,
-            pad_token_id=self.tokenizer.eos_token_id,  # Set pad token ID
-            attention_mask=inputs.new_ones(inputs.shape)  # Set attention mask
+        response = self.llm.generate(
+            [formatted_prompt],
+            vllm.SamplingParams(
+                max_tokens=MAX_TOKENS,
+                temperature=TEMPERATURE
+            ),
+            use_tqdm=False,  # you might consider setting this to True during local development
         )
 
-        output_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        
-        # Find the index where generated text starts
-        start_index = len(query)
-        # Get the generated text
-        generated_part = output_text[start_index:].strip()
+        output_text = response[0].outputs[0].text
         
         # Use regular expression to find JSON part
-        accuracy_json_match = re.search(r'({.*})', generated_part)
+        accuracy_json_match = re.search(r'({.*})', output_text)
         if accuracy_json_match:
             accuracy_json = accuracy_json_match.group(1)
         else:

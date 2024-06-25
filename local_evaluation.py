@@ -66,7 +66,9 @@ if __name__ == "__main__":
     )
 
     # Initialize evaluation model
-    evaluation_model = EvaluationModel(config_path=config_path)
+    evaluation_model = EvaluationModel(config_path, 
+                                       participant_model.llm, 
+                                       participant_model.tokenizer)
 
     # Evaluate Predictions
     evaluation_results = evaluation_utils.evaluate_predictions(
