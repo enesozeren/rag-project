@@ -1,0 +1,67 @@
+INFO:root:
+---DATASET PATH---:
+example_data/subsampled_crag_task_1_dev_v3_release.jsonl.bz2
+INFO:root:
+---MODELS/USER_CONFIG.PY FILE---:
+# from models.dummy_model import DummyModel
+# isort: skip_file
+
+# UserModel = DummyModel
+
+# Uncomment the lines below to use the Vanilla LLAMA baseline
+# from models.vanilla_llama_baseline import InstructModel
+
+# UserModel = InstructModel
+
+
+# Uncomment the lines below to use the RAG LLAMA baseline
+from models.rag_llama_baseline import RAGModel
+
+UserModel = RAGModel
+
+INFO:root:
+---CONFIG PATH---:
+config/temp_0.1_config.yaml
+INFO:root:
+---CONFIGS---:
+ChatModelParams:
+  MODEL_PATH: models/meta-llama/Meta-Llama-3-70B-Instruct
+  VLLM_TENSOR_PARALLEL_SIZE: 4
+  VLLM_GPU_MEMORY_UTILIZATION: 0.5
+  N_OUT_SEQ: 1
+  TOP_P: 0.9
+  TEMPERATURE: 0.1
+  SKIP_SPECIAL_TOKENS: true
+  MAX_TOKENS: 50
+EmbeddingModelParams:
+  MODEL_PATH: models/sentence-transformers/all-MiniLM-L6-v2
+  SENTENTENCE_TRANSFORMER_BATCH_SIZE: 128
+RagSystemParams:
+  NUM_CONTEXT_SENTENCES: 20
+  MAX_CONTEXT_SENTENCE_LENGTH: 1000
+  MAX_CONTEXT_REFERENCES_LENGTH: 4000
+  AICROWD_SUBMISSION_BATCH_SIZE: 8
+EvaluationModelParams:
+  MODEL_PATH: models/meta-llama/Meta-Llama-3-70B-Instruct
+
+INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransformer: models/sentence-transformers/all-MiniLM-L6-v2
+INFO:root:
+---EVALUATION RESULTS---:
+score: 0.06606606606606613
+exact_accuracy: 0.06606606606606606
+accuracy: 0.3003003003003003
+hallucination: 0.23423423423423423
+missing: 0.46546546546546547
+n_miss: 155
+n_correct: 100
+n_correct_exact: 22
+total: 333
+
+INFO:root:
+ ---EXPERIMENT DURATION---
+batch_generate_answer: 7.69 Min
+calculate_embeddings: 0.47 Min
+evaluate_predictions: 2.50 Min
+generate_prediction: 8.05 Min
+total_duration: 17.05 Min
+
