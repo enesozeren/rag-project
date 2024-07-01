@@ -16,6 +16,8 @@ ChatModelParams:
   # while using fewer tokens.
 
 EmbeddingModelParams:
+  RERANKING_MODEL_PATH: "models/sentence-transformers/BAAI/bge-reranker-v2-m3" # The model that will be used as CrossEncoder for reranking
+  TOP_K_BEFORE_RERANKING: 100
   MODEL_PATH: "models/sentence-transformers/all-MiniLM-L6-v2" # The model that will be used as EmbeddingModel
   SENTENTENCE_TRANSFORMER_BATCH_SIZE: 128  # TUNE THIS VARIABLE depending on the size of your embedding model and GPU mem available
 

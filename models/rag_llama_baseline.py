@@ -5,7 +5,6 @@ import numpy as np
 import torch
 import vllm
 from sentence_transformers import CrossEncoder, SentenceTransformer
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from evaluation.evaluation_utils import timer
 from models.chunk_extractor import ChunkExtractor
@@ -64,7 +63,7 @@ class RAGModel:
         )
         # Initialize a reranking transformer model
         self.reranker = CrossEncoder(
-            "models/sentence-transformers/BAAI/bge-reranker-v2-m3"
+            self.CONFIG["EmbeddingModelParams"]["RERANKING_MODEL_PATH"]
         )
 
     @timer("calculate_embeddings")
@@ -185,7 +184,7 @@ class RAGModel:
             # and retrieve top-N results.
             retrieval_results = relevant_chunks[
                 (-cosine_scores).argsort()[
-                    : 7 * self.CONFIG["RagSystemParams"]["NUM_CONTEXT_SENTENCES"]
+                    : self.CONFIG["EmbeddingModelParams"]["TOP_K_BEFORE_RERANKING"]
                 ]
             ]
             # rerank results
