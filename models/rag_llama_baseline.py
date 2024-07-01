@@ -1,9 +1,11 @@
 import os
 from typing import Any, Dict, List
 
+import numpy as np
 import torch
 import vllm
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import CrossEncoder, SentenceTransformer
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from evaluation.evaluation_utils import timer
 from models.chunk_extractor import ChunkExtractor
@@ -60,6 +62,9 @@ class RAGModel:
             device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
             trust_remote_code=True,
         )
+        # Initialize a reranking transformer model
+        self.rerank_tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-reranker-v2-m3")
+        self.reranker = CrossEncoder("models/reranker/BAAI/bge-reranker-v2-m3")
 
     @timer("calculate_embeddings")
     def calculate_embeddings(self, sentences):
@@ -89,6 +94,17 @@ class RAGModel:
         #       todo: this can also be done in a Ray native approach.
         #
         return embeddings
+
+    @timer("get_reranking_scores")
+    def get_reranking_scores(self, query, chunks):
+        rank = self.reranker.rank(query, chunks)
+        idx, scores = [], []
+        for r in rank:
+            idx.append(r["corpus_id"])
+            scores.append(r["score"])
+        idx = np.array(idx)
+        scores = np.array(scores)
+        return idx, scores
 
     def get_batch_size(self) -> int:
         """
@@ -168,8 +184,18 @@ class RAGModel:
             # and retrieve top-N results.
             retrieval_results = relevant_chunks[
                 (-cosine_scores).argsort()[
-                    : self.CONFIG["RagSystemParams"]["NUM_CONTEXT_SENTENCES"]
+                    : 7 * self.CONFIG["RagSystemParams"]["NUM_CONTEXT_SENTENCES"]
                 ]
+            ]
+            # rerank results
+            ranking_idx, ranking_scores = self.get_reranking_scores(
+                query, retrieval_results
+            )
+            retrieval_results = retrieval_results[
+                ranking_idx[np.argsort(ranking_scores)[::-1]]
+            ]
+            retrieval_results = retrieval_results[
+                : self.CONFIG["RagSystemParams"]["NUM_CONTEXT_SENTENCES"]
             ]
 
             # You might also choose to skip the steps above and
