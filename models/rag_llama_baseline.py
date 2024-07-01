@@ -63,8 +63,9 @@ class RAGModel:
             trust_remote_code=True,
         )
         # Initialize a reranking transformer model
-        self.rerank_tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-reranker-v2-m3")
-        self.reranker = CrossEncoder("models/reranker/BAAI/bge-reranker-v2-m3")
+        self.reranker = CrossEncoder(
+            "models/sentence-transformers/BAAI/bge-reranker-v2-m3"
+        )
 
     @timer("calculate_embeddings")
     def calculate_embeddings(self, sentences):
