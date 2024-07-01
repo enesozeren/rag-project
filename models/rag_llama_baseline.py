@@ -245,7 +245,7 @@ class RAGModel:
             f"Prioritize the most recent information in the references with respect to Current Time. "
             f"If the references do not contain the necessary information to answer the question, "
             f"respond with 'I don't know'. "
-            f"All False Premise questions should be answered with a standard response 'invalid question'. "            
+            f"All False Premise questions should be answered with a standard response 'invalid question'. "
             f"There is no need to explain the reasoning behind your answers."
         )
         formatted_prompts = []

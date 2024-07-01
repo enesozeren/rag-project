@@ -1,0 +1,48 @@
+INFO:root:
+---DATASET PATH---:
+example_data/subsampled_crag_task_1_dev_v3_release.jsonl.bz2
+INFO:root:
+---MODELS/USER_CONFIG.PY FILE---:
+# from models.dummy_model import DummyModel
+# isort: skip_file
+
+# UserModel = DummyModel
+
+# Uncomment the lines below to use the Vanilla LLAMA baseline
+# from models.vanilla_llama_baseline import InstructModel
+
+# UserModel = InstructModel
+
+
+# Uncomment the lines below to use the RAG LLAMA baseline
+from models.rag_llama_baseline import RAGModel
+
+UserModel = RAGModel
+
+INFO:root:
+---CONFIG PATH---:
+config/default_config.yaml
+INFO:root:
+---CONFIGS---:
+ChatModelParams:
+  MODEL_PATH: models/meta-llama/Meta-Llama-3-70B-Instruct
+  VLLM_TENSOR_PARALLEL_SIZE: 4
+  VLLM_GPU_MEMORY_UTILIZATION: 0.5
+  N_OUT_SEQ: 1
+  TOP_P: 0.9
+  TEMPERATURE: 0.1
+  SKIP_SPECIAL_TOKENS: true
+  MAX_TOKENS: 50
+EmbeddingModelParams:
+  MODEL_PATH: models/sentence-transformers/gtr-t5-xl
+  SENTENTENCE_TRANSFORMER_BATCH_SIZE: 128
+RagSystemParams:
+  NUM_CONTEXT_SENTENCES: 20
+  MAX_CONTEXT_SENTENCE_LENGTH: 1000
+  MAX_CONTEXT_REFERENCES_LENGTH: 4000
+  AICROWD_SUBMISSION_BATCH_SIZE: 8
+EvaluationModelParams:
+  MODEL_PATH: models/meta-llama/Meta-Llama-3-70B-Instruct
+
+INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransformer: models/sentence-transformers/gtr-t5-xl
+INFO:sentence_transformers.cross_encoder.CrossEncoder:Use pytorch device: cuda
