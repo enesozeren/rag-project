@@ -212,7 +212,16 @@ class RAGModel:
         - query_times (List[str]): A list of query_time strings corresponding to each query.
         - batch_retrieval_results (List[str])
         """
-        system_prompt = "You are provided with a question and various references. Your task is to answer the question succinctly, using the fewest words possible. If the references do not contain the necessary information to answer the question, respond with 'I don't know'. There is no need to explain the reasoning behind your answers."
+        system_prompt = (
+            f"You are provided with a question and various references. "
+            f"Your task is to answer the question succinctly, using the fewest words possible. "
+            f"The time of the question is given before the question as Current Time, "
+            f"Prioritize the most recent information in the references with respect to Current Time. "
+            f"If the references do not contain the necessary information to answer the question, "
+            f"respond with 'I don't know'. "
+            f"All False Premise questions should be answered with a standard response 'invalid question'. "            
+            f"There is no need to explain the reasoning behind your answers."
+        )
         formatted_prompts = []
 
         for _idx, query in enumerate(queries):
@@ -234,7 +243,6 @@ class RAGModel:
             # Limit the length of references to fit the model's input size.
 
             user_message += f"{references}\n------\n\n"
-            user_message
             user_message += f"Using only the references listed above, answer the following question: \n"
             user_message += f"Current Time: {query_time}\n"
             user_message += f"Question: {query}\n"
