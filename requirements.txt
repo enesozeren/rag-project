@@ -13,3 +13,4 @@ transformers
 vllm>=0.4.2
 pyyaml==6.0.1
 argparse==1.4.0
+justext
