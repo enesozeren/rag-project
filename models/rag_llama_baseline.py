@@ -184,7 +184,7 @@ class RAGModel:
             # and retrieve top-N results.
             retrieval_results = relevant_chunks[
                 (-cosine_scores).argsort()[
-                    : self.CONFIG["EmbeddingModelParams"]["TOP_K_BEFORE_RERANKING"]
+                    : self.CONFIG["RagSystemParams"]["BEFORE_TOP_K"]
                 ]
             ]
             # rerank results
