@@ -67,18 +67,17 @@ if __name__ == "__main__":
     )
 
     # Log queries, ground truths, and predictions
-    rag_output_file = os.path.join("outputs", f"ex_{model_name}_{time_str}.yaml")
+    rag_output_file = os.path.join("outputs", f"ex_{model_name}_{time_str}.txt")
     with open(rag_output_file, "w") as file:
-        yaml.dump(
-            {
-                "queries": queries,
-                "ground_truths": ground_truths,
-                "predictions": predictions,
-            },
-            file,
-            default_flow_style=False,
-            sort_keys=False,
-        )
+        file.write("Queries:\n")
+        for query in queries:
+            file.write(query + "\n")
+        file.write("\nGround Truths:\n")
+        for ground_truth in ground_truths:
+            file.write(ground_truth + "\n")
+        file.write("\nPredictions:\n")
+        for prediction in predictions:
+            file.write(prediction + "\n")
 
     # Initialize evaluation model
     evaluation_model = EvaluationModel(config_path, 
