@@ -39,7 +39,6 @@ class ChunkExtractor:
         for start, end in offsets:
             # Extract the sentence and limit its length
             sentence = text[start:end][: self.CONFIG['RagSystemParams']['MAX_CONTEXT_SENTENCE_LENGTH']]
-            sentence = text[start:end]
             sentence_chunks.append(sentence)
 
         return sentence_chunks
@@ -94,7 +93,6 @@ class ChunkExtractor:
                 for start, end in offsets:
                     # Extract the sentence and limit its length
                     sentence = paragraph[start:end][: self.CONFIG['RagSystemParams']['MAX_CONTEXT_SENTENCE_LENGTH']]
-                    sentence = paragraph[start:end]
                     sentence_chunks.append(sentence)
 
         # If no paragraphs are found use the old sentence chunking method
