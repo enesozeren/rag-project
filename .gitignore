@@ -1,6 +1,4 @@
 .vscode
 __pycache__
-api_responses/*.json
 .DS_Store
-example_data/*
-
+example_data/subsampled_crag_task_1_dev_v3_release.jsonl.bz2

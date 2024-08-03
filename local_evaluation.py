@@ -10,6 +10,7 @@ from evaluation.evaluation_utils import time_logs, timer
 from models.evaluation_model import EvaluationModel
 from models.user_config import UserModel
 from models.utils import load_config
+import os
 
 if __name__ == "__main__":
     """
@@ -30,11 +31,11 @@ if __name__ == "__main__":
     start_time = time.perf_counter()
 
     # The test dataset path
-    DATASET_PATH = "example_data/subsampled_crag_task_1_dev_v3_release.jsonl.bz2"
+    DATASET_PATH = os.path.join("example_data", "subsampled_crag_task_1_dev_v3_release.jsonl.bz2")
     # Log the dataset path
 
     # Log the model/user_config.py content
-    user_config_path = "models/user_config.py"
+    user_config_path = os.path.join("models", "user_config.py")
     with open(user_config_path, "r") as user_config_file:
         user_config_content = user_config_file.read()
 
@@ -64,6 +65,20 @@ if __name__ == "__main__":
     queries, ground_truths, predictions = evaluation_utils.generate_predictions(
         DATASET_PATH, participant_model
     )
+
+    # Log queries, ground truths, and predictions
+    rag_output_file = os.path.join("outputs", f"ex_{model_name}_{time_str}.yaml")
+    with open(rag_output_file, "w") as file:
+        yaml.dump(
+            {
+                "queries": queries,
+                "ground_truths": ground_truths,
+                "predictions": predictions,
+            },
+            file,
+            default_flow_style=False,
+            sort_keys=False,
+        )
 
     # Initialize evaluation model
     evaluation_model = EvaluationModel(config_path, 
