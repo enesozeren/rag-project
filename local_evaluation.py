@@ -16,7 +16,9 @@ if __name__ == "__main__":
     """
     Run the local evaluation script with a configuration file.
     EX: 
-        python local_evaluation.py --config=config/default_config.yaml
+        python local_evaluation.py 
+        --config=config/default_config.yaml
+        --data_path=example_data/dev_data.jsonl.bz2
     
     You can find the logs in the logs folder.
     """
@@ -24,15 +26,17 @@ if __name__ == "__main__":
     parser.add_argument(
         "--config", type=str, required=True, help="Path to the configuration file."
     )
+    parser.add_argument(
+        "--data_path", type=str, required=True, help="Path to the data file."
+    )
 
     args = parser.parse_args()
     config_path = args.config
-
-    start_time = time.perf_counter()
-
     # The test dataset path
-    DATASET_PATH = os.path.join("example_data", "subsampled_crag_task_1_dev_v3_release.jsonl.bz2")
-    # Log the dataset path
+    dataset_path = args.data_path
+
+    # Start the timer
+    start_time = time.perf_counter()
 
     # Log the model/user_config.py content
     user_config_path = os.path.join("models", "user_config.py")
@@ -52,7 +56,7 @@ if __name__ == "__main__":
         filename=f"logs/ex_{model_name}_{time_str}.log", level=logging.INFO
     )
 
-    logging.info("\n---DATASET PATH---:\n%s", DATASET_PATH)
+    logging.info("\n---DATASET PATH---:\n%s", dataset_path)
     logging.info("\n---MODELS/USER_CONFIG.PY FILE---:\n%s", user_config_content)
     logging.info("\n---CONFIG PATH---:\n%s", config_path)
     logging.info(
@@ -63,7 +67,7 @@ if __name__ == "__main__":
     # Generate predictions
     participant_model = UserModel(config_path=config_path)
     queries, ground_truths, predictions = evaluation_utils.generate_predictions(
-        DATASET_PATH, participant_model
+        dataset_path, participant_model
     )
 
     # Log queries, ground truths, and predictions
