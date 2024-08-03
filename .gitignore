@@ -2,3 +2,4 @@
 __pycache__
 .DS_Store
 example_data/subsampled_crag_task_1_dev_v3_release.jsonl.bz2
+outputs/*.txt

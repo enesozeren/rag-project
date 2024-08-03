@@ -67,7 +67,7 @@ if __name__ == "__main__":
     )
 
     # Log queries, ground truths, and predictions
-    rag_output_file = os.path.join("outputs", f"ex_{model_name}_{time_str}.txt")
+    rag_output_file = os.path.join("outputs", f"rag_outputs_{time_str}.txt")
     with open(rag_output_file, "w") as file:
         file.write("Queries:\n")
         for query in queries:
