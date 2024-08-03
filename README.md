@@ -53,37 +53,9 @@ LMU 2024 Summer Semester - Applied Deep Learning Project
 └── requirements.txt
 ```
 
-# 📏 Evaluation
-
-Follow the steps here for your experiments:
-
-1. Create a configuration file in config directory to store your parameters and model weight directories (Ex: config/default_config.yaml). You can check one of the existing config files for the syntax.
-
-2. Run the local evaluation file by giving the config file you created
-```bash
-python local_evaluation.py --config=config/default_config.yaml
-```
-
-3. You can find the logs in the logs folder by checking the date in the log file name
-
-Note: local_evaluation.py script is used for evaluation with open source model instead of a OpenAI GPT api. Do not confuse this with running the evaluations on local machine, you would probably need some GPUs to run local_evaluation.py script. (With Llama 3 70B chat model & all-MiniLM-L6-v2 embedding model we recommand at least 2 nvidia A100 GPUs)
-
-# Logs
-
-When `local_evaluation.py` script executed there will be a log file created in `logs` directory.
-Logs contains:
-```
-1. ---DATASET PATH---               for logging which dataset is used for evaluation
-2. ---MODELS/USER_CONFIG.PY FILE--- for logging which class used as rag system
-3. ---CONFIG PATH---                for logging which config file used to execute the script
-4. ---CONFIGS---                    for logging the parameters in the used config file
-5. ---EVALUATION RESULTS---         for logging the metric values after evaluation executed
-6. ---EXPERIMENT DURATION---        for profiling purposes
-```
-
 # Downloading Model Weights
 
-To run / evaluate our RAG systems with the methods mentioned above, you need to download and save the model weights.
+To run / evaluate the RAG systems with the methods mentioned below, you need to download and save the model weights.
 Here we illustrate downloading model weights for our best resulting setup.
 You need a huggingface account and access to Llama model weights.
 
@@ -122,6 +94,48 @@ You need a huggingface account and access to Llama model weights.
    ```
 
 After downloading and saving the model weights with the codes above you can run the evaluation script.
+
+# 📏 Evaluation
+
+Follow the steps here for your experiments:
+
+1. Create a configuration file in config directory to store your parameters and model weight directories (Ex: config/default_config.yaml). You can check one of the existing config files for the syntax.
+
+2. Run the local evaluation file by giving the config file you created
+```bash
+python local_evaluation.py \
+--config=config/default_config.yaml \
+--data_path=example_data/dev_data.jsonl.bz2
+```
+
+3. You can find the logs in the logs folder by checking the date in the log file name
+
+Note: local_evaluation.py script is used for evaluation with open source model instead of a OpenAI GPT api. Do not confuse this with running the evaluations on local machine, you would probably need some GPUs to run local_evaluation.py script. (With Llama 3 70B chat model & all-MiniLM-L6-v2 embedding model we recommand at least 2 nvidia A100 GPUs)
+
+# Logs
+
+When `local_evaluation.py` script executed there will be a log file created in `logs` directory.
+Logs contains:
+```
+1. ---DATASET PATH---               for logging which dataset is used for evaluation
+2. ---MODELS/USER_CONFIG.PY FILE--- for logging which class used as rag system
+3. ---CONFIG PATH---                for logging which config file used to execute the script
+4. ---CONFIGS---                    for logging the parameters in the used config file
+5. ---EVALUATION RESULTS---         for logging the metric values after evaluation executed
+6. ---EXPERIMENT DURATION---        for profiling purposes
+```
+
+# Docker
+
+You can build the docker image with the following command.
+```bash
+docker build -t rag:latest .
+```
+
+To run the evaluation on docker container use the following bash script. Note that you need gpus for this.
+```bash
+bash evaluate_on_docker.sh
+```
 
 # Further Documents
 
