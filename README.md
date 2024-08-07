@@ -1,12 +1,22 @@
 # Meta KDD Cup '24: LMU Applied DL Team
 
-LMU 2024 Summer Semester - Applied Deep Learning Project
+Ludwig-Maximilians-Universität (LMU) 2024 Summer Semester - Applied Deep Learning Project
 
 **Team Members**:
-* Ercong (Supervisor)
-* Daniel
-* Enes
-* Julia
+* Ercong Nie (Supervisor)
+* Daniel Gloukhman
+* Enes Özeren
+* Julia Broden
+
+**Introduction**:
+This project uses the baseline RAG template from Meta KDD CRAG Challenge. We have focused on the first task in the challenge (Retrieval Summarization) and conducted experiments to improve this baseline RAG system. 
+- Main Components of this RAG system:
+   - Embedding Model: Creates the embedding vectors for given information resources and user queries.
+   - Retrieval Process: We use cosine similarity to retrieve the most related information for the user query.
+   - LLM: Answers the user's query with retrieved information.
+- Dataset: We have used subsamples of the dataset from the challenge to evaluate our experiments. The dataset contains question, ground truth answer, html resources which might contain the information required for the right answer but it is not guaranteed. 
+- Evaluation: We have used another LLM to evaluate the given responses from our RAG System
+- We have experimented with embedding models, LLMs, hyperparameters of the LLM and our rag system, chunking, re-ranking of retrieved documents, instruction prompts. Please see the `report` directory for details.
 
 # File Structure
 ```
