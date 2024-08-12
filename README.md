@@ -3,25 +3,28 @@
 Ludwig-Maximilians-Universität (LMU) 2024 Summer Semester - Applied Deep Learning Project
 
 **Team Members**:
-* Ercong Nie (Supervisor)
-* Daniel Gloukhman
-* Enes Özeren
-* Julia Broden
+
+- Ercong Nie (Supervisor)
+- Daniel Gloukhman
+- Enes Özeren
+- Julia Broden
 
 **Introduction**:
-This project uses the baseline RAG template from Meta KDD CRAG Challenge. We have focused on the first task in the challenge (Retrieval Summarization) and conducted experiments to improve this baseline RAG system. 
+This project uses the baseline RAG template from Meta KDD CRAG Challenge. We have focused on the first task in the challenge (Retrieval Summarization) and conducted experiments to improve this baseline RAG system.
+
 - Main Components of this RAG system:
-   - Embedding Model: Creates the embedding vectors for given information resources and user queries.
-   - Retrieval Process: We use cosine similarity to retrieve the most related information for the user query.
-   - LLM: Answers the user's query with retrieved information.
-- Dataset: We have used subsamples of the dataset from the challenge to evaluate our experiments. The dataset contains question, ground truth answer, html resources which might contain the information required for the right answer but it is not guaranteed. 
+  - Embedding Model: Creates the embedding vectors for given information resources and user queries.
+  - Retrieval Process: We use cosine similarity to retrieve the most related information for the user query.
+  - LLM: Answers the user's query with retrieved information.
+- Dataset: We have used subsamples of the dataset from the challenge to evaluate our experiments. The dataset contains question, ground truth answer, html resources which might contain the information required for the right answer but it is not guaranteed.
 - Evaluation: We have used another LLM to evaluate the given responses from our RAG System
 - We have experimented with embedding models, LLMs, hyperparameters of the LLM and our rag system, chunking, re-ranking of retrieved documents, instruction prompts. Please see the `report` directory for details.
 
 # File Structure
+
 ```
 .
-├── config                                      <- contains configuration files for RAG system 
+├── config                                      <- contains configuration files for RAG system
 ├── docs                                        <- contains documents for code and meta kdd cup challenge
 │   ├── baselines.md
 │   ├── batch_prediction_interface.md
@@ -31,7 +34,12 @@ This project uses the baseline RAG template from Meta KDD CRAG Challenge. We hav
 │   ├── runtime.md
 │   └── submission.md
 ├── evaluation                                  <- script directory for local evaluation utility functions
-│   └── evaluation_utils.py
+│   └── Dockerfile
+│   ├── evaluate_on_docker.sh
+│   ├── evaluate.sh
+│   ├── evaluation_utils.py
+│   ├── __init__.py
+│   └── local_evaluation.py                     <- evaluation script with open source models contained in models/ dir
 ├── example_data                                <- datasets for local evaluation of RAG system
 │   ├── dev_data.jsonl.bz2                                  <- 10 samples of query & resources
 │   ├── subsampled_crag_task_1_dev_v3_release.jsonl.bz2     <- 333 samples of query & resources
@@ -56,9 +64,6 @@ This project uses the baseline RAG template from Meta KDD CRAG Challenge. We hav
 ├── tokenizer                                   <- tokenizer directory
 ├── aicrowd.json                                <- submission info json
 ├── apt.txt
-├── docker_run.sh
-├── Dockerfile
-├── local_evaluation.py                         <- evaluation script with open source models contained in models/ dir
 ├── README.md
 └── requirements.txt
 ```
@@ -70,7 +75,7 @@ Here we illustrate downloading model weights for our best resulting setup.
 You need a huggingface account and access to Llama model weights.
 
 1. **Login via CLI**:
-   
+
    Authenticate yourself with the Hugging Face CLI using the token created in the previous step. Run:
 
    ```bash
@@ -112,6 +117,7 @@ Follow the steps here for your experiments:
 1. Create a configuration file in config directory to store your parameters and model weight directories (Ex: config/default_config.yaml). You can check one of the existing config files for the syntax.
 
 2. Run the local evaluation file by giving the config file you created
+
 ```bash
 python local_evaluation.py \
 --config=config/default_config.yaml \
@@ -126,6 +132,7 @@ Note: local_evaluation.py script is used for evaluation with open source model i
 
 When `local_evaluation.py` script executed there will be a log file created in `logs` directory.
 Logs contains:
+
 ```
 1. ---DATASET PATH---               for logging which dataset is used for evaluation
 2. ---MODELS/USER_CONFIG.PY FILE--- for logging which class used as rag system
@@ -138,11 +145,13 @@ Logs contains:
 # Docker
 
 You can build the docker image with the following command.
+
 ```bash
 docker build -t rag:latest .
 ```
 
 To run the evaluation on docker container use the following bash script. Note that you need gpus for this.
+
 ```bash
 bash evaluate_on_docker.sh
 ```
