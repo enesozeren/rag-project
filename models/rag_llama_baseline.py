@@ -1,14 +1,11 @@
 import os
 from typing import Any, Dict, List
 
-import numpy as np
-import torch
 import vllm
-from sentence_transformers import CrossEncoder, SentenceTransformer
 
 from evaluation.evaluation_utils import timer
-from models.chunk_extractor import ChunkExtractor
 from models.utils import load_config
+from retrieval import VectorDB
 
 
 class RAGModel:
@@ -20,8 +17,8 @@ class RAGModel:
     def __init__(self, config_path="config/default_config.yaml"):
         # Load configuration
         self.CONFIG = load_config(config_path)
+        self.vector_db = VectorDB()
         self.initialize_models()
-        self.chunk_extractor = ChunkExtractor()
 
     def initialize_models(self):
         # Initialize the Chat Model
@@ -56,55 +53,6 @@ class RAGModel:
 
         # Initialize a sentence transformer model
         # Load a sentence transformer model optimized for sentence embeddings, using CUDA if available.
-        self.sentence_model = SentenceTransformer(
-            self.CONFIG["EmbeddingModelParams"]["MODEL_PATH"],
-            device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
-            trust_remote_code=True,
-        )
-        # Initialize a reranking transformer model
-        self.reranker = CrossEncoder(
-            self.CONFIG["EmbeddingModelParams"]["RERANKING_MODEL_PATH"]
-        )
-
-    @timer("calculate_embeddings")
-    def calculate_embeddings(self, sentences):
-        """
-        Compute normalized embeddings for a list of sentences using a sentence encoding model.
-
-        This function leverages multiprocessing to encode the sentences, which can enhance the
-        processing speed on multi-core machines.
-
-        Args:
-            sentences (List[str]): A list of sentences for which embeddings are to be computed.
-
-        Returns:
-            np.ndarray: An array of normalized embeddings for the given sentences.
-
-        """
-        embeddings = self.sentence_model.encode(
-            sentences=sentences,
-            normalize_embeddings=True,
-            batch_size=self.CONFIG["EmbeddingModelParams"][
-                "SENTENTENCE_TRANSFORMER_BATCH_SIZE"
-            ],
-        )
-        # Note: There is an opportunity to parallelize the embedding generation across 4 GPUs
-        #       but sentence_model.encode_multi_process seems to interefere with Ray
-        #       on the evaluation servers.
-        #       todo: this can also be done in a Ray native approach.
-        #
-        return embeddings
-
-    @timer("get_reranking_scores")
-    def get_reranking_scores(self, query, chunks):
-        rank = self.reranker.rank(query, chunks)
-        idx, scores = [], []
-        for r in rank:
-            idx.append(r["corpus_id"])
-            scores.append(r["score"])
-        idx = np.array(idx)
-        scores = np.array(scores)
-        return idx, scores
 
     def get_batch_size(self) -> int:
         """
@@ -153,54 +101,8 @@ class RAGModel:
         batch_search_results = batch["search_results"]
         query_times = batch["query_time"]
 
-        # Chunk all search results using ChunkExtractor
-        chunks, chunk_interaction_ids = self.chunk_extractor.extract_chunks(
-            batch_interaction_ids, batch_search_results
-        )
-
-        # Calculate all chunk embeddings
-        chunk_embeddings = self.calculate_embeddings(chunks)
-
-        # Calculate embeddings for queries
-        query_embeddings = self.calculate_embeddings(queries)
-
-        # Retrieve top matches for the whole batch
-        batch_retrieval_results = []
-        for _idx, interaction_id in enumerate(batch_interaction_ids):
-            query = queries[_idx]
-            query_time = query_times[_idx]
-            query_embedding = query_embeddings[_idx]
-
-            # Identify chunks that belong to this interaction_id
-            relevant_chunks_mask = chunk_interaction_ids == interaction_id
-
-            # Filter out the said chunks and corresponding embeddings
-            relevant_chunks = chunks[relevant_chunks_mask]
-            relevant_chunks_embeddings = chunk_embeddings[relevant_chunks_mask]
-
-            # Calculate cosine similarity between query and chunk embeddings,
-            cosine_scores = (relevant_chunks_embeddings * query_embedding).sum(1)
-
-            # and retrieve top-N results.
-            retrieval_results = relevant_chunks[
-                (-cosine_scores).argsort()[
-                    : self.CONFIG["RagSystemParams"]["BEFORE_TOP_K"]
-                ]
-            ]
-            # rerank results
-            ranking_idx, ranking_scores = self.get_reranking_scores(
-                query, retrieval_results
-            )
-            retrieval_results = retrieval_results[
-                ranking_idx[np.argsort(ranking_scores)[::-1]]
-            ]
-            retrieval_results = retrieval_results[
-                : self.CONFIG["RagSystemParams"]["NUM_CONTEXT_SENTENCES"]
-            ]
-
-            # You might also choose to skip the steps above and
-            # use a vectorDB directly.
-            batch_retrieval_results.append(retrieval_results)
+        self.vector_db.set_data(batch_interaction_ids, batch_search_results)
+        batch_retrieval_results = self.vector_db.get_top_k(queries, query_times)
 
         # Prepare formatted prompts from the LLM
         formatted_prompts = self.format_prompts(
