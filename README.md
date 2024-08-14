@@ -119,7 +119,7 @@ Follow the steps here for your experiments:
 2. Run the local evaluation file by giving the config file you created
 
 ```bash
-python local_evaluation.py \
+python -m evaluation.local_evaluation \
 --config=config/default_config.yaml \
 --data_path=example_data/dev_data.jsonl.bz2
 ```
@@ -147,13 +147,13 @@ Logs contains:
 You can build the docker image with the following command.
 
 ```bash
-docker build -t rag:latest .
+docker build -t rag:latest -f evaluation/Dockerfile .
 ```
 
 To run the evaluation on docker container use the following bash script. Note that you need gpus for this.
 
 ```bash
-bash evaluate_on_docker.sh
+bash evaluation/evaluate_on_docker.sh
 ```
 
 # Further Documents
