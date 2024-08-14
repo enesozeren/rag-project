@@ -1,0 +1,69 @@
+INFO:root:
+---DATASET PATH---:
+example_data/subsampled_crag_task_1_dev_v3_release.jsonl.bz2
+INFO:root:
+---MODELS/USER_CONFIG.PY FILE---:
+# from models.dummy_model import DummyModel
+# isort: skip_file
+
+# UserModel = DummyModel
+
+# Uncomment the lines below to use the Vanilla LLAMA baseline
+# from models.vanilla_llama_baseline import InstructModel
+
+# UserModel = InstructModel
+
+
+# Uncomment the lines below to use the RAG LLAMA baseline
+from models.rag_llama_baseline import RAGModel
+
+UserModel = RAGModel
+
+INFO:root:
+---CONFIG PATH---:
+config/default_config.yaml
+INFO:root:
+---CONFIGS---:
+ChatModelParams:
+  MODEL_PATH: models/meta-llama/Meta-Llama-3-70B-Instruct
+  VLLM_TENSOR_PARALLEL_SIZE: 4
+  VLLM_GPU_MEMORY_UTILIZATION: 0.5
+  N_OUT_SEQ: 1
+  TOP_P: 0.9
+  TEMPERATURE: 0.1
+  SKIP_SPECIAL_TOKENS: true
+  MAX_TOKENS: 50
+EmbeddingModelParams:
+  MODEL_PATH: models/sentence-transformers/gtr-t5-xl
+  SENTENTENCE_TRANSFORMER_BATCH_SIZE: 128
+RagSystemParams:
+  NUM_CONTEXT_SENTENCES: 20
+  MAX_CONTEXT_SENTENCE_LENGTH: 1000
+  MAX_CONTEXT_REFERENCES_LENGTH: 4000
+  AICROWD_SUBMISSION_BATCH_SIZE: 8
+EvaluationModelParams:
+  MODEL_PATH: models/meta-llama/Meta-Llama-3-70B-Instruct
+
+INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransformer: models/sentence-transformers/gtr-t5-xl
+INFO:sentence_transformers.cross_encoder.CrossEncoder:Use pytorch device: cuda
+INFO:root:
+---EVALUATION RESULTS---:
+score: 0.06006006006006004
+exact_accuracy: 0.08108108108108109
+accuracy: 0.33633633633633636
+hallucination: 0.27627627627627627
+missing: 0.38738738738738737
+n_miss: 129
+n_correct: 112
+n_correct_exact: 27
+total: 333
+
+INFO:root:
+ ---EXPERIMENT DURATION---
+batch_generate_answer: 30.05 Min
+calculate_embeddings: 21.85 Min
+evaluate_predictions: 0.87 Min
+generate_prediction: 30.40 Min
+get_reranking_scores: 5.42 Min
+total_duration: 60.49 Min
+
