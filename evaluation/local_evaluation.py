@@ -5,8 +5,8 @@ from datetime import datetime
 
 import yaml
 
-from evaluation import evaluation_utils
-from evaluation.evaluation_utils import time_logs, timer
+from . import evaluation_utils
+from .evaluation_utils import time_logs, timer
 from .model import EvaluationModel
 from models.user_config import UserModel
 from models.utils import load_config

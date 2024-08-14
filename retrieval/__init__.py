@@ -1,1 +1,1 @@
-from vectordb import VectorDB
+from .vectordb import VectorDB

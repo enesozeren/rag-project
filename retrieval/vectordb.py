@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from chunk_extractor import ChunkExtractor
+from .chunk_extractor import ChunkExtractor
 from sentence_transformers import CrossEncoder, SentenceTransformer
 
 from evaluation.evaluation_utils import timer

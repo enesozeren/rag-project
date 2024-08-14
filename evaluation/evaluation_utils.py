@@ -9,9 +9,9 @@ from loguru import logger
 from tqdm.auto import tqdm
 from transformers import LlamaTokenizerFast
 
-from prompts.templates import IN_CONTEXT_EXAMPLES, INSTRUCTIONS
+from generation.prompts.templates import IN_CONTEXT_EXAMPLES, INSTRUCTIONS
 
-tokenizer = LlamaTokenizerFast.from_pretrained("tokenizer")
+tokenizer = LlamaTokenizerFast.from_pretrained("models/tokenizer")
 time_logs = {}
 
 
