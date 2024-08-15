@@ -37,11 +37,11 @@ class VectorDB:
         """
         Removes stored data from memory and sets it to passed data
         """
-        if self._chunk_interaction_ids:
+        if hasattr(self, "_chunk_interaction_ids"):
             del self._chunk_interaction_ids
-        if self.embeddings:
+        if hasattr(self, "embeddings"):
             del self.embeddings
-        if self._chunks:
+        if hasattr(self, "_chunks"):
             del self._chunks
 
         self.batch_interaction_ids = batch_interaction_ids
@@ -94,7 +94,7 @@ class VectorDB:
 
     def rerank(self, query, retrieval_results):
         # rerank results
-        ranking_idx, ranking_scores = self.get_reranking_scores(
+        ranking_idx, ranking_scores = self._get_reranking_scores(
             query, retrieval_results
         )
         retrieval_results = retrieval_results[
