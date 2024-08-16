@@ -1,10 +1,11 @@
 import numpy as np
 import torch
-from .chunk_extractor import ChunkExtractor
 from sentence_transformers import CrossEncoder, SentenceTransformer
 
 from evaluation.evaluation_utils import timer
 from models.utils import load_config
+
+from .chunk_extractor import ChunkExtractor
 
 
 class VectorDB:
@@ -28,10 +29,11 @@ class VectorDB:
             device=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
             trust_remote_code=True,
         )
-        # Initialize a reranking transformer model
-        self.reranker = CrossEncoder(
-            self.CONFIG["EmbeddingModelParams"]["RERANKING_MODEL_PATH"]
-        )
+        if self.CONFIG["EmbeddingModelParams"].get("RERANKING_MODEL_PATH"):
+            # Initialize a reranking transformer model
+            self.reranker = CrossEncoder(
+                self.CONFIG["EmbeddingModelParams"]["RERANKING_MODEL_PATH"]
+            )
 
     def set_data(self, batch_interaction_ids, batch_search_results):
         """

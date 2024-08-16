@@ -35,33 +35,32 @@ This project uses the baseline RAG template from Meta KDD CRAG Challenge. We hav
 │   └── submission.md
 ├── evaluation                                  <- script directory for local evaluation utility functions
 │   └── Dockerfile
+|   ├── model.py                                <- EvaluationModel for evaluations with given open source model in config
 │   ├── evaluate_on_docker.sh
 │   ├── evaluate.sh
 │   ├── evaluation_utils.py
 │   ├── __init__.py
+│   ├── model.py                                <- open source evaluation model
 │   └── local_evaluation.py                     <- evaluation script with open source models contained in models/ dir
 ├── example_data                                <- datasets for local evaluation of RAG system
 │   ├── dev_data.jsonl.bz2                                  <- 10 samples of query & resources
 │   ├── subsampled_crag_task_1_dev_v3_release.jsonl.bz2     <- 333 samples of query & resources
 │   └── subsampling_dataset.py                              <- script to create sample datasets
+├── generation                                              <- module containing the augumented generation of the RAG-system
+│   ├── chatmodel.py
+│   ├── __init__.py
+│   ├── prompts
 ├── logs                                        <- contains local evaluation experiment logs
-├── models                                      <- contains model weights and rag system scripts
-│   ├── README.md
-│   ├── chunk_extractor.py                      <- ChunkExtractor class for creating chunks given html resources
-│   ├── dummy_model.py                          <- dummy rag model class to be used for testing some scripts
-│   ├── evaluation_model.py                     <- EvaluationModel for evaluations with given open source model in config
-│   ├── meta-llama                              <- contains Llama model weights
-│   │   └── Meta-Llama-3-70B-Instruct
-│   ├── rag_llama_baseline.py                   <- RAGModel class for RAG system
-│   ├── sentence-transformers                   <- Embedding model weight directory
-│   │   ├── all-MiniLM-L6-v2
-│   │   └── gtr-t5-xl
+├── models                                      <- directory for model weights
 │   ├── user_config.py                          <- To be used to submit our RAG system class to competition
 │   ├── utils.py                                <- Util functions for RAG system class
 ├── prompts
 │   └── templates.py                            <- prompt templates for evaluation model
 ├── report                                      <- Report for our experiments & findings in pdf format
-├── tokenizer                                   <- tokenizer directory
+├── retrieval
+│   ├── chunk_extractor.py                      <- ChunkExtractor class for creating chunks given html resources
+│   ├── __init__.py
+│   └── vectordb.py                             <- Module containing the code for retrival in RAG
 ├── aicrowd.json                                <- submission info json
 ├── apt.txt
 ├── README.md
@@ -106,6 +105,17 @@ You need a huggingface account and access to Llama model weights.
        --local-dir-use-symlinks False \
        --local-dir models/sentence-transformers/gtr-t5-xl \
        --exclude *.bin *.h5 *.ot # These are alternates to the safetensors hence not needed
+   ```
+
+4. **Download bge-reranker-v2-m3 Model (for reranking)**:
+
+   Similarly, download the `BAAI/bge-reranker-v2-m3` model using the following command:
+
+   ```bash
+   HF_HUB_ENABLE_HF_TRANSFER=1 huggingface-cli download \
+      BAAI/bge-reranker-v2-m3 \
+       --local-dir-use-symlinks False \
+       --local-dir models/reranker/BAAI/bge-reranker-v2-m3
    ```
 
 After downloading and saving the model weights with the codes above you can run the evaluation script.
