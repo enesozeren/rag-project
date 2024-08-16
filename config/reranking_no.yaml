@@ -18,8 +18,6 @@ ChatModelParams:
 EmbeddingModelParams:
   MODEL_PATH: "models/sentence-transformers/gtr-t5-xl" # The model that will be used as EmbeddingModel
   SENTENTENCE_TRANSFORMER_BATCH_SIZE: 128 # TUNE THIS VARIABLE depending on the size of your embedding model and GPU mem available
-  RERANKING_MODEL_PATH: "models/sentence-transformers/BAAI/bge-reranker-v2-m3" # The model that will be used as CrossEncoder for reranking
-  TOP_K_BEFORE_RERANKING: 500 #number of pre selected chunks before reranking
 
 RagSystemParams:
   # Define the number of context sentences to consider for generating an answer.
@@ -30,6 +28,7 @@ RagSystemParams:
   MAX_CONTEXT_REFERENCES_LENGTH: 32000
   # Batch size you wish the evaluators will use to call the `batch_generate_answer` function
   AICROWD_SUBMISSION_BATCH_SIZE: 8 # TUNE THIS VARIABLE depending on the number of GPUs you are requesting and the size of your model.
+  TOP_K_BEFORE_RERANKING: 15 #number of pre selected chunks before reranking
 
 EvaluationModelParams:
   MODEL_PATH: "models/meta-llama/Meta-Llama-3-70B-Instruct" # The model that will be used as EvaluationModel

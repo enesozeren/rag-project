@@ -10,6 +10,6 @@
 
 
 # Uncomment the lines below to use the RAG LLAMA baseline
-from models.rag_llama_baseline import RAGModel
+from generation.chatmodel import RAGModel
 
 UserModel = RAGModel

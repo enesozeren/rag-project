@@ -15,13 +15,13 @@ INFO:root:
 
 
 # Uncomment the lines below to use the RAG LLAMA baseline
-from models.rag_llama_baseline import RAGModel
+from generation.chatmodel import RAGModel
 
 UserModel = RAGModel
 
 INFO:root:
 ---CONFIG PATH---:
-config/reranking_before_top_k_200.yaml
+config/reranking_before_top_k_15.yaml
 INFO:root:
 ---CONFIGS---:
 ChatModelParams:
@@ -36,12 +36,14 @@ ChatModelParams:
 EmbeddingModelParams:
   MODEL_PATH: models/sentence-transformers/gtr-t5-xl
   SENTENTENCE_TRANSFORMER_BATCH_SIZE: 128
+  RERANKING_MODEL_PATH: models/sentence-transformers/BAAI/bge-reranker-v2-m3
+  TOP_K_BEFORE_RERANKING: 15
 RagSystemParams:
   NUM_CONTEXT_SENTENCES: 15
   MAX_CONTEXT_SENTENCE_LENGTH: 2048
   MAX_CONTEXT_REFERENCES_LENGTH: 32000
   AICROWD_SUBMISSION_BATCH_SIZE: 8
-  TOP_K_BEFORE_RERANKING: 200
+  TOP_K_BEFORE_RERANKING: 15
 EvaluationModelParams:
   MODEL_PATH: models/meta-llama/Meta-Llama-3-70B-Instruct
 
@@ -49,22 +51,22 @@ INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransform
 INFO:sentence_transformers.cross_encoder.CrossEncoder:Use pytorch device: cuda
 INFO:root:
 ---EVALUATION RESULTS---:
-score: 0.10510510510510507
-exact_accuracy: 0.0990990990990991
-accuracy: 0.3333333333333333
-hallucination: 0.22822822822822822
-missing: 0.43843843843843844
-n_miss: 146
-n_correct: 111
-n_correct_exact: 33
+score: 0.0930930930930931
+exact_accuracy: 0.0960960960960961
+accuracy: 0.32432432432432434
+hallucination: 0.23123123123123124
+missing: 0.4444444444444444
+n_miss: 148
+n_correct: 108
+n_correct_exact: 32
 total: 333
 
 INFO:root:
  ---EXPERIMENT DURATION---
-batch_generate_answer: 14.88 Min
+batch_generate_answer: 15.33 Min
 calculate_embeddings: 3.37 Min
-evaluate_predictions: 2.39 Min
-generate_prediction: 15.25 Min
-get_reranking_scores: 1.87 Min
-total_duration: 24.13 Min
+evaluate_predictions: 2.50 Min
+generate_prediction: 15.62 Min
+get_reranking_scores: 0.33 Min
+total_duration: 23.67 Min
 
