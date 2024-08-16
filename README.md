@@ -1,6 +1,7 @@
 # Meta KDD Cup '24: LMU Applied DL Team
 
-Ludwig-Maximilians-Universität (LMU) 2024 Summer Semester - Applied Deep Learning Project
+Ludwig-Maximilians-Universität (LMU) 2024 Summer Semester - Applied Deep Learning Project <br>
+Check our report [here](report/rag-report.pdf)
 
 **Team Members**:
 
