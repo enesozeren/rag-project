@@ -17,7 +17,7 @@ class RAGModel:
     def __init__(self, config_path="config/default_config.yaml"):
         # Load configuration
         self.CONFIG = load_config(config_path)
-        self.vector_db = VectorDB()
+        self.vector_db = VectorDB(config_path)
         self.initialize_models()
 
     def initialize_models(self):
@@ -102,7 +102,14 @@ class RAGModel:
         query_times = batch["query_time"]
 
         self.vector_db.set_data(batch_interaction_ids, batch_search_results)
-        batch_retrieval_results = self.vector_db.get_top_k(queries, query_times)
+        reranking = (
+            True
+            if self.CONFIG["EmbeddingModelParams"].get("RERANKING_MODEL_PATH")
+            else False
+        )
+        batch_retrieval_results = self.vector_db.get_top_k(
+            queries, query_times, reranking
+        )
 
         # Prepare formatted prompts from the LLM
         formatted_prompts = self.format_prompts(
